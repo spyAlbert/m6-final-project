@@ -24,13 +24,22 @@ The simplest way to use existing components is to call them using execSync.
 For example, `execSync(`echo "${input}" | ./c/process.sh`, {encoding: 'utf-8'});`
 */
 
-
-const fs = require('fs');
+// const fs = require('fs');
 const {execSync} = require('child_process');
-const path = require('path');
-
+// const path = require('path');
 
 function query(indexFile, args) {
+  // Normalize, remove stopwords, and stem the query using existing components
+  const processedQuery = execSync(
+      `echo "${args}" | ./c/process.sh | ./c/stem.js | tr "\r\n" "  "`,
+      {encoding: 'utf-8'},
+  ).trim();
+  // Search the global index using the processed query string
+  const searchResults = execSync(`grep "${processedQuery}" ${indexFile}`, {
+    encoding: 'utf-8',
+  });
+  // Print the matching lines from the global index file
+  console.log(searchResults.trim());
 }
 
 const args = process.argv.slice(2); // Get command-line arguments
