@@ -1,0 +1,21 @@
+check	stuff	level
+check	stuff	level
+level	check	stuff
+level	right
+level stuff
+level stuff
+level stuff
+level stuff
+link	check	stuff
+right
+simpl	link	check
+stuff	level	check
+stuff	level	right
+check
+level
+level
+link
+simpl
+stuff
+stuff
+right check
