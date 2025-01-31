@@ -10,9 +10,9 @@ while read -r url; do
   fi
 
   echo "[engine] crawling $url">/dev/stderr
-  ./crawl.sh "$url" >d/content.txt
+  time ./crawl.sh "$url" >d/content.txt
   echo "[engine] indexing $url">/dev/stderr
-  ./index.sh d/content.txt "$url"
+  time ./index.sh d/content.txt "$url"
 
   if  [[ "$(cat d/visited.txt | wc -l)" -ge "$(cat d/urls.txt | wc -l)" ]]; then
       # stop the engine if it has seen all available URLs

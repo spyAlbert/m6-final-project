@@ -17,3 +17,5 @@ else
     echo "$0 failure: TF-IDF results are not identical"
     exit 1
 fi
+
+# Test result depends on the corpus.json and global-index.txt in /d, tf-idf will be 0 at first run as idf = log(1/1), which should be 0

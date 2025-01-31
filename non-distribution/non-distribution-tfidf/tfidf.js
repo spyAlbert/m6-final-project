@@ -1,30 +1,32 @@
 #!/usr/bin/env node
 
 // combine process.js → stem.js → combine.js → invert.js → merge.js
+// Usage: Usage: ./tfidf.js <document_url>  < document.txt
+// Effect: Print the new global index file, but frequency will be TF-IDF (note: global-index.txt in /d still shows how many times a term appears in total)
 
-const fs = require("fs");
-const readline = require("readline");
-const natural = require("natural");
+const fs = require('fs');
+const readline = require('readline');
+const natural = require('natural');
 
-const STOPWORDS_FILE = "d/stopwords.txt";
-const GLOBAL_INDEX_FILE = "d/global-index.txt";
-const CORPUS_FILE = "d/corpus.json";
+const STOPWORDS_FILE = 'd/stopwords.txt';
+const GLOBAL_INDEX_FILE = 'd/global-index.txt';
+const CORPUS_FILE = 'd/corpus.json';
 
 // stopwords
 const stopwords = new Set(
-  fs
-    .readFileSync(STOPWORDS_FILE, "utf-8")
-    .split("\n")
-    .map((w) => w.trim())
+    fs
+        .readFileSync(STOPWORDS_FILE, 'utf-8')
+        .split('\n')
+        .map((w) => w.trim()),
 );
 
 // preprocess
 function processText(text) {
   return text
-    .toLowerCase()
-    .replace(/[^a-z]/g, " ")
-    .split(/\s+/)
-    .filter((word) => word && !stopwords.has(word));
+      .toLowerCase()
+      .replace(/[^a-z]/g, ' ')
+      .split(/\s+/)
+      .filter((word) => word && !stopwords.has(word));
 }
 
 // stem
@@ -57,26 +59,26 @@ function buildInvertedIndex(ngrams, url) {
 // read corpus
 function loadCorpus() {
   if (fs.existsSync(CORPUS_FILE)) {
-    return JSON.parse(fs.readFileSync(CORPUS_FILE, "utf8"));
+    return JSON.parse(fs.readFileSync(CORPUS_FILE, 'utf8'));
   }
   // totalDocs: total num of doc, df: number of documents that contain the term, docWordCount: num of words each url
-  return { totalDocs: 0, df: {}, docWordCount: {} };
+  return {totalDocs: 0, df: {}, docWordCount: {}};
 }
 
 // read global index
 function loadGlobalIndex() {
   if (!fs.existsSync(GLOBAL_INDEX_FILE)) return {};
   const index = {};
-  fs.readFileSync(GLOBAL_INDEX_FILE, "utf8")
-    .split("\n")
-    .forEach((line) => {
-      if (!line.trim()) return;
-      const [term, ...entries] = line.split(" | ");
-      index[term] = {};
-      for (let i = 0; i < entries.length; i += 2) {
-        index[term][entries[i]] = parseInt(entries[i + 1]);
-      }
-    });
+  fs.readFileSync(GLOBAL_INDEX_FILE, 'utf8')
+      .split('\n')
+      .forEach((line) => {
+        if (!line.trim()) return;
+        const [term, ...entries] = line.split(' | ');
+        index[term] = {};
+        for (let i = 0; i < entries.length; i += 2) {
+          index[term][entries[i]] = parseInt(entries[i + 1]);
+        }
+      });
   return index;
 }
 
@@ -102,28 +104,28 @@ function mergeIndexes(localIndex, url, totalWordsInDoc) {
 
   // write back
   const newIndex = Object.entries(globalIndex)
-    .map(
-      ([term, urls]) =>
-        `${term.replace(/\s+/g, " ")} | ${Object.entries(urls)
-          .map(([doc, tf]) => `${doc} ${tf}`)
-          .join(" ")}`
-    )
-    .join("\n");
+      .map(
+          ([term, urls]) =>
+            `${term.replace(/\s+/g, ' ')} | ${Object.entries(urls)
+                .map(([doc, tf]) => `${doc} ${tf}`)
+                .join(' ')}`,
+      )
+      .join('\n');
 
   fs.writeFileSync(GLOBAL_INDEX_FILE, newIndex);
   fs.writeFileSync(CORPUS_FILE, JSON.stringify(corpus, null, 2));
 
   const logIndex = Object.entries(globalIndex)
-    .map(
-      ([term, urls]) =>
-        `${term.replace(/\s+/g, " ")} | ${Object.entries(urls)
-          .map(
-            ([doc, tf]) =>
-              `${doc} ${computeTFIDF(term, tf / totalWordsInDoc, corpus)}`
-          )
-          .join(" ")}`
-    )
-    .join("\n");
+      .map(
+          ([term, urls]) =>
+            `${term.replace(/\s+/g, ' ')} | ${Object.entries(urls)
+                .map(
+                    ([doc, tf]) =>
+                      `${doc} ${computeTFIDF(term, tf / totalWordsInDoc, corpus)}`,
+                )
+                .join(' ')}`,
+      )
+      .join('\n');
   // print term, url and corresponding TF-IDF
   console.log(logIndex);
 }
@@ -135,26 +137,30 @@ function computeTFIDF(term, tf, corpus) {
   return tf * idf;
 }
 
-async function main() {
+function main() {
   const url = process.argv[2];
   if (!url) {
-    console.error("Usage: node tfidf.js <document_url>");
+    console.error('Usage: node tfidf.js <document_url>');
     process.exit(1);
   }
 
-  let rawText = "";
-  const rl = readline.createInterface({ input: process.stdin });
-  for await (const line of rl) rawText += line + "\n";
+  let rawText = '';
+  const rl = readline.createInterface({input: process.stdin});
+  rl.on('line', (line) => {
+    rawText += line + '\n';
+  });
 
-  const words = processText(rawText);
-  const stemmedWords = stemWords(words);
-  const ngrams = generateNGrams(stemmedWords);
-  const localIndex = buildInvertedIndex(ngrams, url);
+  rl.on('close', () => {
+    const words = processText(rawText);
+    const stemmedWords = stemWords(words);
+    const ngrams = generateNGrams(stemmedWords);
+    const localIndex = buildInvertedIndex(ngrams, url);
 
-  // num of words in doc
-  const totalWordsInDoc = words.length;
+    // num of words in doc
+    const totalWordsInDoc = words.length;
 
-  mergeIndexes(localIndex, url, totalWordsInDoc);
+    mergeIndexes(localIndex, url, totalWordsInDoc);
+  });
 }
 
 main();
