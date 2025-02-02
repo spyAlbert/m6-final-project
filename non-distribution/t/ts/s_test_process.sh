@@ -8,7 +8,7 @@ cd "$(dirname "$0")/../..$R_FOLDER" || exit 1
 DIFF=${DIFF:-diff}
 
 
-if $DIFF <(cat "$T_FOLDER"/d/d2.txt | c/process.sh | sort) <(sort "$T_FOLDER"/d/d3.txt) >&2;
+if $DIFF <(cat "$T_FOLDER"/d/d2_s.txt | c/process.sh | sort) <(sort "$T_FOLDER"/d/d3_s.txt) >&2;
 then
     echo "$0 success: texts are identical"
     exit 0
