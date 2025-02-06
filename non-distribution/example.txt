@@ -1,0 +1,18 @@
+check	stuff	level | 2 | 
+check	stuff | 2 | 
+check | 2 | 
+level	check	stuff | 1 | 
+level	check | 1 | 
+level	right | 1 | 
+level | 2 | 
+link    check   stuff | 1 | 
+link	check | 1 | 
+link | 1 | 
+right | 1 | 
+simpl	link	check | 1 | 
+simpl	link | 1 | 
+simpl | 1 | 
+stuff	level	check | 1 | 
+stuff	level	right | 1 | 
+stuff	level | 2 | 
+stuff | 2 | 
