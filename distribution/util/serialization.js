@@ -48,8 +48,7 @@ function serialize(object) {
 function findNative(fnName) {
   for (const modName in nativeModules) {
     const module = nativeModules[modName];
-    const keys = Object.getOwnPropertyNames(module);
-    for (const key of keys) {
+    for (const key of Object.getOwnPropertyNames(module)) {
       if (module[key] && areFunctionsEqual(fnName, module[key])) {
         console.log(modName);
         return { module: modName, id: key };
@@ -87,7 +86,7 @@ function serializeWithMap(object, map) {
     }
 
     // check whether it's a global of fs native obj
-    for (const key in global) {
+    for (const key of Object.getOwnPropertyNames(global)) {
       if (global[key] === object) {
         return JSON.stringify({
           type: "GlobalNative",
@@ -96,7 +95,7 @@ function serializeWithMap(object, map) {
       }
     }
 
-    for (const key in fs) {
+    for (const key of Object.getOwnPropertyNames(fs)) {
       if (fs[key] === object) {
         return JSON.stringify({
           type: "FSNative",
