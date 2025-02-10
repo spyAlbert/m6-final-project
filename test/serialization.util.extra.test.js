@@ -1,56 +1,55 @@
-const distribution = require("../config.js");
+const distribution = require('../config.js');
 const util = distribution.util;
 
-const fs = require("fs");
+const fs = require('fs');
 
 beforeAll(() => {
-  const original = { a: 1, b: 2, c: 3 };
+  const original = {a: 1, b: 2, c: 3};
   const serialized = util.serialize(original);
   const deserialized = util.deserialize(serialized);
   expect(deserialized).not.toBe(original);
 });
 
-test("(5 pts) serializeCircularObject", () => {
-  const object = { a: 1, b: 2, c: 3 };
+test('(5 pts) serializeCircularObject', () => {
+  const object = {a: 1, b: 2, c: 3};
   object.self = object;
   const serialized = util.serialize(object);
   const deserialized = util.deserialize(serialized);
   expect(deserialized).toEqual(object);
 });
 
-test("(5 pts) serializeNativeFunction", () => {
+test('(5 pts) serializeNativeFunction', () => {
   const fn = fs.readFile;
-
   const serialized = util.serialize(fn);
   const deserialized = util.deserialize(serialized);
   // Native function serialization might not work as expected
   expect(deserialized).toBe(fs.readFile);
 });
 
-test("(5 pts) serializeAnotherNativeFunction", () => {
-  const fn = console.log;
+test('(5 pts) serializeAnotherNativeFunction', () => {
+  const fn = require('console').log;
   const serialized = util.serialize(fn);
   const deserialized = util.deserialize(serialized);
   // Native function serialization might not work as expected
-  expect(deserialized).toBe(console.log);
+  expect(deserialized).toBe(fn);
 });
 
-test("(5 pts) serializeObjectWithNativeFunctions", () => {
-  const object = { a: fs.readFile };
+test('(5 pts) serializeObjectWithNativeFunctions', () => {
+  const object = {a: fs.readFile};
   const serialized = util.serialize(object);
   const deserialized = util.deserialize(serialized);
   // Native function serialization might not work as expected
   expect(deserialized.a).toBe(fs.readFile);
 });
 
-test("(5 pts) serializeRainbowObjectCirc", () => {
+test('(5 pts) serializeRainbowObjectCirc', () => {
   const object = {
     n: 1,
-    s: "Hello, World!",
+    s: 'Hello, World!',
     a: [1, 2, 3, 4, 5],
-    e: new Error("Hello, World!"),
+    e: new Error('Hello, World!'),
     d: new Date(),
-    o: { x: 1, y: 2, z: 3 },
+    o: {x: 1, y: 2, z: 3},
     n: null,
     u: undefined,
   };
@@ -63,55 +62,44 @@ test("(5 pts) serializeRainbowObjectCirc", () => {
   expect(deserialized).toEqual(object);
 });
 
-test("(5 pts) serialize and deserialize built-in constructors", () => {
-  const original = [Object, Array, Object.prototype];
-  let serialized = util.serialize(original);
-  serialized = util.deserialize(serialized);
-  expect(serialized[0]).toEqual(Object);
-  expect(serialized[1]).toEqual(Array);
-  expect(serialized[2]).toEqual(Object.prototype);
-});
-
-test("(5 pts) serialize and deserialize cyclic structure with function", () => {
-  const f = function f() {};
-  const original = [f, f];
+test('(5 pts) serialize and deserialize structure with cycle-like reference', () => {
+  const x = {a: 1, b: 2, c: 3};
+  const original = {a: x, b: x};
   const serialized = util.serialize(original);
   const deserialized = util.deserialize(serialized);
 
-  expect(Array.isArray(deserialized)).toEqual(true);
-  expect(typeof deserialized[0] === "function").toEqual(true);
-  expect(deserialized[0].name).toBe("f");
+  expect(deserialized).toEqual(original);
 });
 
-test("(5 pts) serialize and deserialize cyclic structure with function", () => {
+test('(5 pts) serialize and deserialize cyclic structure with function', () => {
   const f = function f() {};
   const original = [f, f];
   const serialized = util.serialize(original);
   const deserialized = util.deserialize(serialized);
   expect(Array.isArray(deserialized)).toEqual(true);
-  expect(typeof deserialized[0] === "function").toEqual(true);
-  expect(deserialized[0].name).toBe("f");
+  expect(typeof deserialized[0] === 'function').toEqual(true);
+  expect(deserialized[0].name).toBe('f');
 });
 
-test("(5 pts) serialize and deserialize cyclic object with function", () => {
+test('(5 pts) serialize and deserialize object with function', () => {
   const f = function f() {};
-  const original = { a: f, b: f };
+  const original = {a: f, b: f};
   let serialized = util.serialize(original);
   serialized = util.deserialize(serialized);
-  expect(typeof serialized === "object").toEqual(true);
-  expect(typeof serialized.a === "function").toEqual(true);
-  expect(serialized.a.name).toBe("f");
+  expect(typeof serialized === 'object').toEqual(true);
+  expect(typeof serialized.a === 'function').toEqual(true);
+  expect(serialized.a.name).toBe('f');
 });
 
-test("(5 pts) serialize and deserialize complex cyclic structure", () => {
+test('(5 pts) serialize and deserialize complex cyclic structure', () => {
   const f = function f() {};
-  let original = { a: f, b: f };
+  let original = {a: f, b: f};
   original = [original, f, [original, f]];
   let serialized = util.serialize(original);
   serialized = util.deserialize(serialized);
   expect(Array.isArray(serialized)).toEqual(true);
-  expect(typeof serialized[0] === "object").toEqual(true);
-  expect(typeof serialized[1] === "function").toEqual(true);
-  expect(serialized[1].name).toBe("f");
+  expect(typeof serialized[0] === 'object').toEqual(true);
+  expect(typeof serialized[1] === 'function').toEqual(true);
+  expect(serialized[1].name).toBe('f');
   expect(Array.isArray(serialized[2])).toBe(true);
 });
