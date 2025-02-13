@@ -1,86 +1,17 @@
-# distribution
+# M2: Actors and Remote Procedure Calls (RPC)
 
-This is the distribution library. When loaded, distribution introduces functionality supporting the distributed execution of programs. To download it:
+## Summary
 
-## Installation
+> Summarize your implementation, including key challenges you encountered. Remember to update the `report` section of the `package.json` file with the total number of hours it took you to complete each task of M2 (`30`) and the lines of code per task.
+> My implementation comprises `5` software components, totaling `<300>` lines of code. Key challenges included `<1.In comm and node.js part, I met the problem about how to know the error when I got the response from node.js. To handle this, I use the serialization and deserialization from M1, and add an extra step to see whether my response is error when I get response. 2. In rpc part, the most challenging part for me is how to replace '__NODE_INFO__' with actual node config. Although it seems easy, but for me, when I serialize function in M1, I keep the entire funtion body, simply use toString() to do serialization, which means if I simply replace '__NODE_INFO__' with JSON.stringify(node), my function body is not valid anymore, and error occurs in execution. So, instead of try to replace '__NODE_INFO__' with whole node object, I tried to divide it into '__IP_INFO__'  and '__PORT_INFO__', replace these things are much easier as they are just string and number.>`.
 
-```sh
-$ npm i '@brown-ds/distribution'
-```
+## Correctness & Performance Characterization
 
-This command downloads and installs the distribution library.
+> Describe how you characterized the correctness and performance of your implementation
+> _Correctness_: I wrote `<10>` tests; these tests take `<0.302s>` to execute.
+> _Performance_: I characterized the performance of comm and RPC by sending 1000 service requests in a tight loop. Average throughput and latency is recorded in `package.json`.
 
-## Testing
+## Key Feature
 
-There are several categories of tests:
-
-- Regular Tests (`*.test.js`)
-- Scenario Tests (`*.scenario.js`)
-- Extra Credit Tests (`*.extra.test.js`)
-- Student Tests (`*.student.test.js`) - inside `test/test-student`
-
-### Running Tests
-
-By default, all regular tests are run. Use the options below to run different sets of tests:
-
-1. Run all regular tests (default): `$ npm test` or `$ npm test -- -t`
-2. Run scenario tests: `$ npm test -- -c`
-3. Run extra credit tests: `$ npm test -- -ec`
-4. Run the `non-distribution` tests: `$ npm test -- -nd`
-5. Combine options: `$ npm test -- -c -ec -nd -t`
-
-## Usage
-
-To import the library, be it in a JavaScript file or on the interactive console, run:
-
-```js
-let distribution = require("@brown-ds/distribution");
-```
-
-Now you have access to the full distribution library. You can start off by serializing some values.
-
-```js
-let s = distribution.util.serialize(1); // '{"type":"number","value":"1"}'
-let n = distribution.util.deserialize(s); // 1
-```
-
-You can inspect information about the current node (for example its `sid`) by running:
-
-```js
-distribution.local.status.get("sid", console.log); // 8cf1b
-```
-
-You can also store and retrieve values from the local memory:
-
-```js
-distribution.local.mem.put({ name: "nikos" }, "key", console.log); // {name: 'nikos'}
-distribution.local.mem.get("key", console.log); // {name: 'nikos'}
-```
-
-You can also spawn a new node:
-
-```js
-let node = { ip: "127.0.0.1", port: 8080 };
-distribution.local.status.spawn(node, console.log);
-```
-
-Using the `distribution.all` set of services will allow you to act
-on the full set of nodes created as if they were a single one.
-
-```js
-distribution.all.status.get("sid", console.log); // { '8cf1b': '8cf1b', '8cf1c': '8cf1c' }
-```
-
-You can also send messages to other nodes:
-
-```js
-distribution.all.comm.send(
-  ["sid"],
-  { node: node, service: "status", method: "get" },
-  console.log
-); // 8cf1c
-```
-
-# Results and Reflections
-
-> ...
+> How would you explain the implementation of `createRPC` to someone who has no background in computer science — i.e., with the minimum jargon possible?
+> To implement `createRPC`, you should first come up a native function. Then, you should give that function a name to help you to keep track of that native function. As you are the one who create RPC stub, you should also provide your address to let others know where to send request. After that, when someone want to use your native function, just call the stub you created, it will automatically send you a message with your address and name of your native function., you can get the result and send it back.

@@ -1,12 +1,30 @@
 /** @typedef {import("../types").Callback} Callback */
 
-
+// create a service map
+const local = require("./local");
+const serviceMap = {
+  status: local.status,
+  routes: local.routes,
+  comm: local.comm,
+  rpc: global.toLocal,
+};
 /**
  * @param {string} configuration
  * @param {Callback} callback
  * @return {void}
  */
 function get(configuration, callback) {
+  callback = callback || function () {};
+  global.moreStatus.counts++;
+  //update global.toLocal if rpc
+  if (configuration == "rpc") {
+    serviceMap.rpc = global.toLocal;
+  }
+  if (serviceMap[configuration] === undefined) {
+    callback(new Error("undefined service"), null);
+  } else {
+    callback(null, serviceMap[configuration]);
+  }
 }
 
 /**
@@ -16,6 +34,16 @@ function get(configuration, callback) {
  * @return {void}
  */
 function put(service, configuration, callback) {
+  callback = callback || function () {};
+  global.moreStatus.counts++;
+  if (typeof service !== "object") {
+    callback(new Error("not a valid service"), null);
+  } else if (typeof configuration !== "string") {
+    callback(new Error("not a valid service name"), null);
+  } else {
+    serviceMap[configuration] = service;
+    callback(null, service);
+  }
 }
 
 /**
@@ -23,6 +51,15 @@ function put(service, configuration, callback) {
  * @param {Callback} callback
  */
 function rem(configuration, callback) {
-};
+  callback = callback || function () {};
+  global.moreStatus.counts++;
+  if (serviceMap[configuration] === undefined) {
+    callback(new Error("undefined service"), null);
+  } else {
+    let temp = serviceMap[configuration];
+    delete serviceMap[configuration];
+    callback(null, temp);
+  }
+}
 
-module.exports = {get, put, rem};
+module.exports = { get, put, rem };

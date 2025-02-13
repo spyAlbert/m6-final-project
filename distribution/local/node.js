@@ -1,7 +1,8 @@
-const http = require('http');
-const url = require('url');
-const log = require('../util/log');
-
+const http = require("http");
+const url = require("url");
+const log = require("../util/log");
+const util = require("../util/util");
+const local = require("./local");
 
 /*
     The start function will be called to start your node.
@@ -9,22 +10,33 @@ const log = require('../util/log');
     After your node has booted, you should call the callback.
 */
 
-
-const start = function(callback) {
+const start = function (callback) {
   const server = http.createServer((req, res) => {
     /* Your server will be listening for PUT requests. */
 
     // Write some code...
-
+    if (req.method !== "PUT") {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      return res.end(util.serialize(new Error("Not a PUT method")));
+    }
 
     /*
       The path of the http request will determine the service to be used.
       The url will have the form: http://node_ip:node_port/service/method
     */
 
-
     // Write some code...
 
+    const path = url.parse(req.url, true);
+    console.log(path.pathname);
+    const pathParts = path.pathname.split("/");
+    if (pathParts.length !== 3) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      console.log(pathParts);
+      return res.end(util.serialize(new Error("Not a valid path")));
+    }
+
+    const [emptyStr, serviceName, methodName] = pathParts;
 
     /*
 
@@ -43,26 +55,39 @@ const start = function(callback) {
 
     // Write some code...
 
-    let body = [];
+    let data = "";
 
-    req.on('data', (chunk) => {
+    req.on("data", (chunk) => {
+      data += chunk;
     });
-
-    req.on('end', () => {
-
+    req.on("end", () => {
       /* Here, you can handle the service requests.
       Use the local routes service to get the service you need to call.
       You need to call the service with the method and arguments provided in the request.
       Then, you need to serialize the result and send it back to the caller.
       */
-
       // Write some code...
-
-
-
+      let body = util.deserialize(data);
+      local.routes.get(serviceName, (e, s) => {
+        if (e) {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          return res.end(util.serialize(e));
+        } else {
+          const service = s;
+          const method = service[methodName];
+          method(...body, (e, s) => {
+            if (e) {
+              res.writeHead(200, { "Content-Type": "application/json" });
+              return res.end(util.serialize(e));
+            } else {
+              res.writeHead(200, { "Content-Type": "application/json" });
+              return res.end(util.serialize(s));
+            }
+          });
+        }
+      });
     });
   });
-
 
   /*
     Your server will be listening on the port and ip specified in the config
@@ -74,12 +99,14 @@ const start = function(callback) {
   */
 
   server.listen(global.nodeConfig.port, global.nodeConfig.ip, () => {
-    log(`Server running at http://${global.nodeConfig.ip}:${global.nodeConfig.port}/`);
+    log(
+      `Server running at http://${global.nodeConfig.ip}:${global.nodeConfig.port}/`
+    );
     global.distribution.node.server = server;
     callback(server);
   });
 
-  server.on('error', (error) => {
+  server.on("error", (error) => {
     // server.close();
     log(`Server error: ${error}`);
     throw error;

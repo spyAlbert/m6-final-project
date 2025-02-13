@@ -1,13 +1,11 @@
-const distribution = require('../config.js');
+const distribution = require("../config.js");
 const local = distribution.local;
 const id = distribution.util.id;
-
-test('(10 pts) local.comm(status.get(nid))', (done) => {
+test("(10 pts) local.comm(status.get(nid))", (done) => {
   const node = distribution.node.config;
 
-  const remote = {node: node, service: 'status', method: 'get'};
-  const message = ['nid']; // Arguments to the method
-
+  const remote = { node: node, service: "status", method: "get" };
+  const message = ["nid"]; // Arguments to the method
   local.comm.send(message, remote, (e, v) => {
     try {
       expect(e).toBeFalsy();
@@ -19,12 +17,10 @@ test('(10 pts) local.comm(status.get(nid))', (done) => {
   });
 });
 
-test('(10 pts) comm: status.get()', (done) => {
+test("(10 pts) comm: status.get()", (done) => {
   const node = distribution.node.config;
-  const remote = {node: node, service: 'status', method: 'get'};
-  const message = [
-    'sid',
-  ];
+  const remote = { node: node, service: "status", method: "get" };
+  const message = ["sid"];
 
   local.comm.send(message, remote, (e, v) => {
     try {
@@ -37,10 +33,10 @@ test('(10 pts) comm: status.get()', (done) => {
   });
 });
 
-test('(10 pts) comm: status.get() with nonexistent key', (done) => {
+test("(10 pts) comm: status.get() with nonexistent key", (done) => {
   const node = distribution.node.config;
-  const remote = {node: node, service: 'status', method: 'get'};
-  const message = ['invalid'];
+  const remote = { node: node, service: "status", method: "get" };
+  const message = ["invalid"];
 
   local.comm.send(message, remote, (e, v) => {
     try {
@@ -54,10 +50,10 @@ test('(10 pts) comm: status.get() with nonexistent key', (done) => {
   });
 });
 
-test('(10 pts) comm: status.get() with invalid service', (done) => {
+test("(10 pts) comm: status.get() with invalid service", (done) => {
   const node = distribution.node.config;
-  const remote = {node: node, service: 'invalid', method: 'get'};
-  const message = ['sid'];
+  const remote = { node: node, service: "invalid", method: "get" };
+  const message = ["sid"];
 
   local.comm.send(message, remote, (e, v) => {
     try {
