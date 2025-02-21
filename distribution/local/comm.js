@@ -17,7 +17,9 @@ const util = require("../util/util");
  * @return {void}
  */
 function send(message, remote, callback) {
-  callback = callback || function () {};
+  if (!callback || typeof callback !== "function") {
+    callback = function () {};
+  }
   message = message || [];
   global.moreStatus.counts++;
   if (remote === undefined) {
@@ -27,6 +29,7 @@ function send(message, remote, callback) {
   const node = remote.node;
   const service = remote.service;
   const method = remote.method;
+  const gid = remote.gid || "local";
   if (node === undefined || service === undefined || method === undefined) {
     callback(new Error("unvalid remote service"));
     return;
@@ -39,7 +42,7 @@ function send(message, remote, callback) {
   const options = {
     hostname: node.ip,
     port: node.port,
-    path: `/${service}/${method}`,
+    path: `/${gid}/${service}/${method}`,
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -61,7 +64,8 @@ function send(message, remote, callback) {
       if (result instanceof Error) {
         callback(result, null);
       } else {
-        callback(null, result);
+        const compoundResult = result;
+        callback(compoundResult.error, compoundResult.value);
       }
     });
   });

@@ -2,14 +2,16 @@
 
 function routes(config) {
   const context = {};
-  context.gid = config.gid || 'all';
+  context.gid = config.gid || "all";
 
   /**
    * @param {object} service
    * @param {string} name
    * @param {Callback} callback
    */
-  function put(service, name, callback = () => { }) {
+  function put(service, name, callback = () => {}) {
+    const remote = { service: "routes", method: "put" };
+    distribution[context.gid].comm.send([service, name], remote, callback);
   }
 
   /**
@@ -17,10 +19,12 @@ function routes(config) {
    * @param {string} name
    * @param {Callback} callback
    */
-  function rem(service, name, callback = () => { }) {
+  function rem(service, name, callback = () => {}) {
+    const remote = { service: "routes", method: "rem" };
+    distribution[context.gid].comm.send([service, name], remote, callback);
   }
 
-  return {put, rem};
+  return { put, rem };
 }
 
 module.exports = routes;

@@ -1,4 +1,4 @@
-const distribution = require("@brown-ds/distribution");
+const distribution = require("../../config.js");
 
 test("(2 pts) (scenario) simple callback practice", () => {
   /* Collect the result of 3 callback services in list  */

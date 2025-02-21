@@ -1,13 +1,15 @@
 const id = require("../util/id");
 const log = require("../util/log");
+const wire = require("../util/wire");
+const serialization = require("../util/serialization");
+const child_process = require("node:child_process");
 
 const config = global.nodeConfig;
-
 const status = {};
 
 global.moreStatus = {
-  sid: id.getSID(global.nodeConfig),
-  nid: id.getNID(global.nodeConfig),
+  sid: global.distribution.util.id.getSID(global.nodeConfig),
+  nid: global.distribution.util.id.getNID(global.nodeConfig),
   counts: 0,
 };
 
@@ -42,15 +44,35 @@ status.get = function (configuration, callback) {
 };
 
 status.spawn = function (configuration, callback) {
-  // TODO: implement need in M3
-  //const distribution = require("@brown-ds/distribution");
-  //return distribution.local.status.spawn(configuration, callback);
+  callback = callback || function () {};
+  const { onStart, ...remainConfigs } = configuration;
+  const internalFun = () => {
+    console.log("internalFun called!");
+    if (onStart) {
+      onStart();
+    }
+    callback(null, configuration);
+  };
+  const rpcCall = wire.createRPC(internalFun);
+  const newConfig = { ...remainConfigs, onStart: rpcCall };
+
+  const configJson = serialization.serialize(newConfig);
+
+  const child = child_process.fork("distribution.js", ["--config", configJson]);
+
+  child.on("error", (err) => {
+    callback(err, null);
+  });
 };
 
 status.stop = function (callback) {
-  // TODO: implement need in M3
-  //const distribution = require("@brown-ds/distribution");
-  //return distribution.local.status.stop(callback);
+  callback = callback || function () {};
+  const localServer = global.distribution.node.server;
+  localServer.close(() => callback(null, config));
+  // set Time out
+  setTimeout(() => {
+    callback(null, config);
+    process.exit(1);
+  }, 120);
 };
-
 module.exports = status;

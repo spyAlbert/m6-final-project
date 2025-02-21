@@ -3,7 +3,6 @@ const url = require("url");
 const log = require("../util/log");
 const util = require("../util/util");
 const local = require("./local");
-
 /*
     The start function will be called to start your node.
     It will take a callback as an argument.
@@ -30,13 +29,13 @@ const start = function (callback) {
     const path = url.parse(req.url, true);
     console.log(path.pathname);
     const pathParts = path.pathname.split("/");
-    if (pathParts.length !== 3) {
+    if (pathParts.length !== 4) {
       res.writeHead(400, { "Content-Type": "application/json" });
       console.log(pathParts);
       return res.end(util.serialize(new Error("Not a valid path")));
     }
 
-    const [emptyStr, serviceName, methodName] = pathParts;
+    const [emptyStr, gid, serviceName, methodName] = pathParts;
 
     /*
 
@@ -68,21 +67,23 @@ const start = function (callback) {
       */
       // Write some code...
       let body = util.deserialize(data);
-      local.routes.get(serviceName, (e, s) => {
+      local.routes.get({ service: serviceName, gid: gid }, (e, s) => {
         if (e) {
           res.writeHead(200, { "Content-Type": "application/json" });
           return res.end(util.serialize(e));
         } else {
+          const compoundResult = { error: null, value: null };
           const service = s;
           const method = service[methodName];
           method(...body, (e, s) => {
             if (e) {
-              res.writeHead(200, { "Content-Type": "application/json" });
-              return res.end(util.serialize(e));
-            } else {
-              res.writeHead(200, { "Content-Type": "application/json" });
-              return res.end(util.serialize(s));
+              compoundResult.error = e;
             }
+            if (s) {
+              compoundResult.value = s;
+            }
+            res.writeHead(200, { "Content-Type": "application/json" });
+            return res.end(util.serialize(compoundResult));
           });
         }
       });

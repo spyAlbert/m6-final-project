@@ -16,14 +16,29 @@ const serviceMap = {
 function get(configuration, callback) {
   callback = callback || function () {};
   global.moreStatus.counts++;
-  //update global.toLocal if rpc
-  if (configuration == "rpc") {
-    serviceMap.rpc = global.toLocal;
-  }
-  if (serviceMap[configuration] === undefined) {
-    callback(new Error("undefined service"), null);
+  if (
+    typeof configuration === "string" ||
+    configuration.gid === "local" ||
+    configuration.gid === undefined
+  ) {
+    configuration = configuration.service || configuration;
+    //update global.toLocal if rpc
+    if (configuration == "rpc") {
+      serviceMap.rpc = global.toLocal;
+    }
+
+    if (serviceMap[configuration] === undefined) {
+      callback(new Error("undefined service"), null);
+    } else {
+      callback(null, serviceMap[configuration]);
+    }
   } else {
-    callback(null, serviceMap[configuration]);
+    // not a local service
+    if (distribution[configuration.gid] === undefined) {
+      callback(new Error("no such group"), null);
+    } else {
+      callback(null, distribution[configuration.gid][configuration.service]);
+    }
   }
 }
 

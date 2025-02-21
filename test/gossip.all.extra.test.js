@@ -1,4 +1,4 @@
-const distribution = require('../config.js');
+const distribution = require("../config.js");
 const id = distribution.util.id;
 
 // This group is used for testing most of the functionality
@@ -12,26 +12,22 @@ const mygroupGroup = {};
 */
 let localServer = null;
 
-const n1 = {ip: '127.0.0.1', port: 8000};
-const n2 = {ip: '127.0.0.1', port: 8001};
-const n3 = {ip: '127.0.0.1', port: 8002};
-const n4 = {ip: '127.0.0.1', port: 8003};
-const n5 = {ip: '127.0.0.1', port: 8004};
-const n6 = {ip: '127.0.0.1', port: 8005};
+const n1 = { ip: "127.0.0.1", port: 8000 };
+const n2 = { ip: "127.0.0.1", port: 8001 };
+const n3 = { ip: "127.0.0.1", port: 8002 };
+const n4 = { ip: "127.0.0.1", port: 8003 };
+const n5 = { ip: "127.0.0.1", port: 8004 };
+const n6 = { ip: "127.0.0.1", port: 8005 };
 
+test("(30 pts) all.gossip.send()", (done) => {
+  distribution.mygroup.groups.put("newgroup", {}, (e, v) => {
+    const newNode = { ip: "127.0.0.1", port: 4444 };
+    const message = ["newgroup", newNode];
 
-test('(30 pts) all.gossip.send()', (done) => {
-  distribution.mygroup.groups.put('newgroup', {}, (e, v) => {
-    const newNode = {ip: '127.0.0.1', port: 4444};
-    const message = [
-      'newgroup',
-      newNode,
-    ];
-
-    const remote = {service: 'groups', method: 'add'};
+    const remote = { service: "groups", method: "add" };
     distribution.mygroup.gossip.send(message, remote, (e, v) => {
       setTimeout(() => {
-        distribution.mygroup.groups.get('newgroup', (e, v) => {
+        distribution.mygroup.groups.get("newgroup", (e, v) => {
           let count = 0;
           for (const k in v) {
             if (Object.keys(v[k]).length > 0) {
@@ -53,7 +49,7 @@ test('(30 pts) all.gossip.send()', (done) => {
 
 beforeAll((done) => {
   // First, stop the nodes if they are running
-  const remote = {service: 'status', method: 'stop'};
+  const remote = { service: "status", method: "stop" };
 
   remote.node = n1;
   distribution.local.comm.send([], remote, (e, v) => {
@@ -66,8 +62,7 @@ beforeAll((done) => {
           remote.node = n5;
           distribution.local.comm.send([], remote, (e, v) => {
             remote.node = n6;
-            distribution.local.comm.send([], remote, (e, v) => {
-            });
+            distribution.local.comm.send([], remote, (e, v) => {});
           });
         });
       });
@@ -83,15 +78,14 @@ beforeAll((done) => {
     localServer = server;
 
     const groupInstantiation = (e, v) => {
-      const mygroupConfig = {gid: 'mygroup'};
+      const mygroupConfig = { gid: "mygroup" };
 
       // Create some groups
-      distribution.local.groups
-          .put(mygroupConfig, mygroupGroup, (e, v) => {
-            distribution.mygroup.groups.put(mygroupConfig, mygroupGroup, (e, v) => {
-              done();
-            });
-          });
+      distribution.local.groups.put(mygroupConfig, mygroupGroup, (e, v) => {
+        distribution.mygroup.groups.put(mygroupConfig, mygroupGroup, (e, v) => {
+          done();
+        });
+      });
     };
 
     // Start the nodes
@@ -111,7 +105,7 @@ beforeAll((done) => {
 
 afterAll((done) => {
   distribution.mygroup.status.stop((e, v) => {
-    const remote = {service: 'status', method: 'stop'};
+    const remote = { service: "status", method: "stop" };
     remote.node = n1;
     distribution.local.comm.send([], remote, (e, v) => {
       remote.node = n2;

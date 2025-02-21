@@ -1,7 +1,7 @@
-const distribution = require('../config.js');
+const distribution = require("../config.js");
 const id = distribution.util.id;
 
-const mygroupConfig = {gid: 'mygroup'};
+const mygroupConfig = { gid: "mygroup" };
 const mygroupGroup = {};
 
 /*
@@ -12,18 +12,17 @@ const mygroupGroup = {};
 */
 let localServer = null;
 
-const n1 = {ip: '127.0.0.1', port: 9001};
-const n2 = {ip: '127.0.0.1', port: 9002};
-const n3 = {ip: '127.0.0.1', port: 9003};
-const n4 = {ip: '127.0.0.1', port: 9004};
-const n5 = {ip: '127.0.0.1', port: 9005};
-const n6 = {ip: '127.0.0.1', port: 9006};
+const n1 = { ip: "127.0.0.1", port: 9001 };
+const n2 = { ip: "127.0.0.1", port: 9002 };
+const n3 = { ip: "127.0.0.1", port: 9003 };
+const n4 = { ip: "127.0.0.1", port: 9004 };
+const n5 = { ip: "127.0.0.1", port: 9005 };
+const n6 = { ip: "127.0.0.1", port: 9006 };
 
-test('(2 pts) all.comm.send(status.get(nid))', (done) => {
+test("(2 pts) all.comm.send(status.get(nid))", (done) => {
   const nids = Object.values(mygroupGroup).map((node) => id.getNID(node));
-  const remote = {service: 'status', method: 'get'};
-
-  distribution.mygroup.comm.send(['nid'], remote, (e, v) => {
+  const remote = { service: "status", method: "get" };
+  distribution.mygroup.comm.send(["nid"], remote, (e, v) => {
     expect(e).toEqual({});
     try {
       expect(Object.values(v).length).toBe(nids.length);
@@ -35,33 +34,41 @@ test('(2 pts) all.comm.send(status.get(nid))', (done) => {
   });
 });
 
-test('(2 pts) local.comm.send(all.status.get(nid))', (done) => {
+test("(2 pts) local.comm.send(all.status.get(nid))", (done) => {
   const nids = Object.values(mygroupGroup).map((node) => id.getNID(node));
-  const remote = {node: n5, service: 'groups', method: 'put'};
+  const remote = { node: n5, service: "groups", method: "put" };
 
   // first register mygroup on n5
-  distribution.local.comm.send([mygroupConfig, mygroupGroup], remote, (e, v) => {
-    const remote = {node: n5, gid: 'mygroup', service: 'status', method: 'get'};
+  distribution.local.comm.send(
+    [mygroupConfig, mygroupGroup],
+    remote,
+    (e, v) => {
+      const remote = {
+        node: n5,
+        gid: "mygroup",
+        service: "status",
+        method: "get",
+      };
+      // from local node, run mygroup.status.get() on n5 via send()
+      distribution.local.comm.send(["nid"], remote, (e, v) => {
+        expect(e).toEqual({});
 
-    // from local node, run mygroup.status.get() on n5 via send()
-    distribution.local.comm.send(['nid'], remote, (e, v) => {
-      expect(e).toEqual({});
-
-      try {
-        expect(Object.values(v).length).toBe(nids.length);
-        expect(Object.values(v)).toEqual(expect.arrayContaining(nids));
-        done();
-      } catch (error) {
-        done(error);
-      }
-    });
-  });
+        try {
+          expect(Object.values(v).length).toBe(nids.length);
+          expect(Object.values(v)).toEqual(expect.arrayContaining(nids));
+          done();
+        } catch (error) {
+          done(error);
+        }
+      });
+    }
+  );
 });
 
-test('(2 pts) all.comm.send(status.get(random))', (done) => {
-  const remote = {service: 'status', method: 'get'};
+test("(2 pts) all.comm.send(status.get(random))", (done) => {
+  const remote = { service: "status", method: "get" };
 
-  distribution.mygroup.comm.send(['random'], remote, (e, v) => {
+  distribution.mygroup.comm.send(["random"], remote, (e, v) => {
     try {
       Object.keys(mygroupGroup).forEach((sid) => {
         expect(e[sid]).toBeDefined();
@@ -78,7 +85,7 @@ test('(2 pts) all.comm.send(status.get(random))', (done) => {
 
 beforeAll((done) => {
   // First, stop the nodes if they are running
-  const remote = {service: 'status', method: 'stop'};
+  const remote = { service: "status", method: "stop" };
 
   remote.node = n1;
   distribution.local.comm.send([], remote, (e, v) => {
@@ -107,15 +114,12 @@ beforeAll((done) => {
     mygroupGroup[id.getSID(n4)] = n4;
     mygroupGroup[id.getSID(n5)] = n5;
 
-
     const groupInstantiation = () => {
       // Create the groups
-      distribution.local.groups
-          .put(mygroupConfig, mygroupGroup, (e, v) => {
-            done();
-          });
+      distribution.local.groups.put(mygroupConfig, mygroupGroup, (e, v) => {
+        done();
+      });
     };
-
 
     // Now, start the nodes listening node
     distribution.node.start((server) => {
@@ -135,12 +139,12 @@ beforeAll((done) => {
           });
         });
       });
-    }); ;
+    });
   };
 });
 
 afterAll((done) => {
-  const remote = {service: 'status', method: 'stop'};
+  const remote = { service: "status", method: "stop" };
   remote.node = n1;
   distribution.local.comm.send([], remote, (e, v) => {
     remote.node = n2;
@@ -162,5 +166,3 @@ afterAll((done) => {
     });
   });
 });
-
-
