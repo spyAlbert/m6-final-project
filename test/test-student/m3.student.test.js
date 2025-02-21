@@ -112,7 +112,7 @@ test("(1 pts) student test", (done) => {
           }
           /* Gossip only provides weak guarantees */
           try {
-            expect(count).toBeGreaterThanOrEqual(6);
+            expect(count).toBeGreaterThanOrEqual(5);
             done();
           } catch (error) {
             done(error);

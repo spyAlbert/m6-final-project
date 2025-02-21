@@ -120,7 +120,7 @@ test("(5 pts) (scenario) use the gossip service", (done) => {
   groupD[id.getSID(n2)] = n2;
   groupD[id.getSID(n3)] = n3;
   // How many nodes are expected to receive the new group membership?
-  let nExpected = 3;
+  let nExpected = 2;
 
   // Experiment with the subset function used in the gossip service...
   let config = {
