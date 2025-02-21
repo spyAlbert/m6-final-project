@@ -16,7 +16,7 @@
 
 > `I tried 5 spawn and it took 486.122 ms, so latency is 97.22 ms, throughput is 10.29.`
 
-> `I tried gossip with group of 6 nodes, with subset = log(nodes.length),it took 536.250 ms to completes, so latency is 89.38ms, throughput is 11.19.`
+> `I tried gossip with group of 6 nodes, with subset = log(nodes.length),it took 48.468 ms to completes, so latency is 8.078 ms, throughput is 123.79.`
 
 ## Key Feature
 

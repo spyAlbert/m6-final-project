@@ -36,7 +36,7 @@
     "throughput": {
       "dev": [
         10.29,
-        11.19
+        123.79
       ],
       "structure": [
         "spawn",
@@ -47,7 +47,7 @@
     "latency": {
       "dev": [
         97.22,
-        89.38
+        8.078
       ],
       "unit": "ms",
       "structure": [

@@ -100,25 +100,23 @@ test("(1 pts) student test", (done) => {
     const remote = { service: "groups", method: "add" };
     const start = performance.now();
     distribution.mygroup.gossip.send(message, remote, (e, v) => {
-      setTimeout(() => {
-        const end = performance.now();
-        console.log(`Latency: ${(end - start).toFixed(3)} ms`);
-        distribution.mygroup.groups.get("newgroup2", (e, v) => {
-          let count = 0;
-          for (const k in v) {
-            if (Object.keys(v[k]).length > 0) {
-              count++;
-            }
+      const end = performance.now();
+      console.log(`Latency: ${(end - start).toFixed(3)} ms`);
+      distribution.mygroup.groups.get("newgroup2", (e, v) => {
+        let count = 0;
+        for (const k in v) {
+          if (Object.keys(v[k]).length > 0) {
+            count++;
           }
-          /* Gossip only provides weak guarantees */
-          try {
-            expect(count).toBeGreaterThanOrEqual(5);
-            done();
-          } catch (error) {
-            done(error);
-          }
-        });
-      }, 500);
+        }
+        /* Gossip only provides weak guarantees */
+        try {
+          expect(count).toBeGreaterThanOrEqual(5);
+          done();
+        } catch (error) {
+          done(error);
+        }
+      });
     });
   });
 });
