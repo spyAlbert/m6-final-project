@@ -63,9 +63,9 @@ const mygroupGroup = {};
 */
 let localServer = null;
 
-const n1 = { ip: "13.59.90.252", port: 8000 };
-const n2 = { ip: "13.59.90.252", port: 8001 };
-const n3 = { ip: "13.59.90.252", port: 8002 };
+const n1 = { ip: "127.0.0.1", port: 8000 };
+const n2 = { ip: "127.0.0.1", port: 8001 };
+const n3 = { ip: "127.0.0.1", port: 8002 };
 
 beforeAll((done) => {
   // First, stop the nodes if they are running
