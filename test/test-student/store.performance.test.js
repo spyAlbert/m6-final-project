@@ -14,7 +14,7 @@ const generateData = (num) => {
 };
 jest.setTimeout(3600000);
 test("(1 pts) student test", async () => {
-  const numObjects = 10;
+  const numObjects = 1000;
   const data = generateData(numObjects);
 
   // Measure Insert Performance
