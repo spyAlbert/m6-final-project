@@ -23,8 +23,8 @@ test("(1 pts) student test", async () => {
     Object.entries(data).map(
       ([key, value]) =>
         new Promise((resolve) => {
-          console.log(distribution.mygroup);
-          distribution.mygroup.store.put(value, key, resolve);
+          console.log(global.distribution.mygroup);
+          global.distribution.mygroup.store.put(value, key, resolve);
         })
     )
   );
@@ -37,7 +37,9 @@ test("(1 pts) student test", async () => {
   await Promise.all(
     Object.keys(data).map(
       (key) =>
-        new Promise((resolve) => distribution.mygroup.store.get(key, resolve))
+        new Promise((resolve) =>
+          global.distribution.mygroup.store.get(key, resolve)
+        )
     )
   );
   let getEnd = performance.now();
@@ -96,7 +98,7 @@ beforeAll((done) => {
 
       // Create some groups
       distribution.local.groups.put(mygroupConfig, mygroupGroup, (e, v) => {
-        console.log(distribution.mygroup);
+        console.log(global.distribution.mygroup);
 
         done();
       });
