@@ -99,24 +99,5 @@ beforeAll((done) => {
 
     // Start the nodes
     groupInstantiation();
-
-});
-
-afterAll((done) => {
-  distribution.mygroup.status.stop((e, v) => {
-    const remote = { service: "status", method: "stop" };
-    remote.node = n1;
-    distribution.local.comm.send([], remote, (e, v) => {
-      remote.node = n2;
-      distribution.local.comm.send([], remote, (e, v) => {
-        remote.node = n3;
-        distribution.local.comm.send([], remote, (e, v) => {
-          distribution.local.groups.clearAll(() => {
-            localServer.close();
-            done();
-          });
-        });
-      });
-    });
   });
 });
