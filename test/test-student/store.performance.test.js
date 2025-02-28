@@ -12,7 +12,7 @@ const generateData = (num) => {
   }
   return data;
 };
-jest.setTimeout(Infinity);
+jest.setTimeout(3600000);
 test("(1 pts) student test", async () => {
   const numObjects = 10;
   const data = generateData(numObjects);
