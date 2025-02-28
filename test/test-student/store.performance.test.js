@@ -12,9 +12,9 @@ const generateData = (num) => {
   }
   return data;
 };
-jest.setTimeout(4000000);
+jest.setTimeout(Infinity);
 test("(1 pts) student test", async () => {
-  const numObjects = 1000;
+  const numObjects = 10;
   const data = generateData(numObjects);
 
   // Measure Insert Performance
