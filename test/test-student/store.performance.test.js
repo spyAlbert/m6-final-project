@@ -71,6 +71,7 @@ const n3 = { ip: "18.219.109.226", port: 8001 };
 beforeAll((done) => {
   // First, stop the nodes if they are running
   const remote = { service: "status", method: "stop" };
+  console.log("hiii");
 
   remote.node = n1;
   distribution.local.comm.send([], remote, (e, v) => {
@@ -88,12 +89,15 @@ beforeAll((done) => {
   // Now, start the base listening node
   distribution.node.start((server) => {
     localServer = server;
+    console.log("starrrrr");
 
     const groupInstantiation = (e, v) => {
       const mygroupConfig = { gid: "mygroup", hash: id.consistentHash };
 
       // Create some groups
       distribution.local.groups.put(mygroupConfig, mygroupGroup, (e, v) => {
+        console.log(distribution.mygroup);
+
         done();
       });
     };
