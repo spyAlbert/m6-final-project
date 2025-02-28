@@ -22,9 +22,10 @@ test("(1 pts) student test", async () => {
   await Promise.all(
     Object.entries(data).map(
       ([key, value]) =>
-        new Promise((resolve) =>
-          distribution.mygroup.store.put(value, key, resolve)
-        )
+        new Promise((resolve) => {
+          console.log(distribution.mygroup);
+          distribution.mygroup.store.put(value, key, resolve);
+        })
     )
   );
   let insertEnd = performance.now();
