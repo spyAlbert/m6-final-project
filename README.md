@@ -17,6 +17,12 @@
 
 > _Performance_ -- insertion and retrieval.
 
+> For performance test an AWS, see store.performance.test.js under test-student folder
+> Insert Latency: 1.688 ms/op
+> Insert Throughput: 592.28 ops/sec
+> Get Latency: 0.018 ms/op
+> Get Throughput: 55757.83 ops/sec
+
 ## Key Feature
 
 > Why is the `reconf` method designed to first identify all the keys to be relocated and then relocate individual objects instead of fetching all the objects immediately and then pushing them to their corresponding locations?

@@ -34,27 +34,20 @@
       "ssd-gb": 460
     },
     "throughput": {
-      "dev": [
-        10.29,
-        123.79
-      ],
       "structure": [
-        "spawn",
-        "gossip"
+        "insert",
+        "retrieve"
       ],
-      "aws": []
+      "aws": [
+        592.28,
+        55757.83
+      ]
     },
     "latency": {
-      "dev": [
-        97.22,
-        8.078
-      ],
-      "unit": "ms",
-      "structure": [
-        "spawn",
-        "gossip"
-      ],
-      "aws": []
+      "aws": [
+        1.688,
+        0.018
+      ]
     },
     "dloc": -99
   }
