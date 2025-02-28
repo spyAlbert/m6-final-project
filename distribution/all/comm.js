@@ -21,7 +21,7 @@ function comm(config) {
    */
   function send(message, configuration, callback) {
     //should somehow get all group nodes
-    distribution.local.groups.get(context.gid, (e, v) => {
+    global.distribution.local.groups.get(context.gid, (e, v) => {
       if (e) {
         //error
         callback(e, null);
@@ -40,7 +40,7 @@ function comm(config) {
         for (const sid in allNodes) {
           const node = allNodes[sid];
           const remote = { node: node, ...configuration };
-          distribution.local.comm.send(message, remote, (e, v) => {
+          global.distribution.local.comm.send(message, remote, (e, v) => {
             if (e) {
               //add to error map
               errorMap[sid] = e;

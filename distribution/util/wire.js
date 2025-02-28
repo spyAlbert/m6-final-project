@@ -25,7 +25,7 @@ function fromRPCTemplate(name) {
       service: "rpc",
       method: "__METHOD_NAME__",
     };
-    distribution.local.comm.send(args, remote, callback);
+    global.distribution.local.comm.send(args, remote, callback);
   };
   return serialization
     .serialize(stub)

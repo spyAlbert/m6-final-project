@@ -1,13 +1,7 @@
 /** @typedef {import("../types").Callback} Callback */
 
 // create a service map
-const local = require("./local");
-const serviceMap = {
-  status: local.status,
-  routes: local.routes,
-  comm: local.comm,
-  rpc: global.toLocal,
-};
+const serviceMap = {};
 /**
  * @param {string} configuration
  * @param {Callback} callback
@@ -23,6 +17,7 @@ function get(configuration, callback) {
   ) {
     configuration = configuration.service || configuration;
     //update global.toLocal if rpc
+
     if (configuration == "rpc") {
       serviceMap.rpc = global.toLocal;
     }
@@ -34,10 +29,13 @@ function get(configuration, callback) {
     }
   } else {
     // not a local service
-    if (distribution[configuration.gid] === undefined) {
+    if (global.distribution[configuration.gid] === undefined) {
       callback(new Error("no such group"), null);
     } else {
-      callback(null, distribution[configuration.gid][configuration.service]);
+      callback(
+        null,
+        global.distribution[configuration.gid][configuration.service]
+      );
     }
   }
 }

@@ -1,25 +1,24 @@
-# M3: Node Groups & Gossip Protocols
+# M4: Distributed Storage
 
 ## Summary
 
-> Summarize your implementation, including key challenges you encountered. Remember to update the `report` section of the `package.json` file with the total number of hours it took you to complete each task of M3 (`40`) and the lines of code per task.
-> My implementation comprises `7` new software components, totaling `450` added lines of code over the previous implementation. Key challenges included `The most challenge part is spawn and stop in status component, as it start a new node in child process, it's pretty hard to debug and figure out what's happened in this process, and how to create a proper RPC stub to notify the caller when node is all set and started. The way I used to slove is try to log something in terminal to see when bad things happeded and code got stuck. Also, I checked carefull about node.js in local folder, find out what exactly happened when starting a node, specifically what parameter the callback expected to take.`.
+> Summarize your implementation, including key challenges you encountered
+
+> For this milestone, I implemented all require components and lab components, including mem and store in local and all, reconf, and periodic check for reconf. The most challenging part for me should be periodic check for reconf, the handout is extremely vague about this component.I add the checking part at put in group service (see groups.js in local folder), whenever a group is generated, we should periodically check that group to see whether it needs reconfig. The most difficult part is how to test my auto reconfiguration, as the check is called periodically, there's no guarantee when check should happen. So, it takes me pretty long time to debug and set a proper timer to test this component.
+
+> Remember to update the `report` section of the `package.json` file with the total number of hours it took you to complete each task of M4 (`40`) and the lines of code (`1250 including tests`)per task.
 
 ## Correctness & Performance Characterization
 
 > Describe how you characterized the correctness and performance of your implementation
 > _Correctness_ -- number of tests and time they take.
 
-> `In this milestone, I developed 5 test to test correctness, it takes 1.523 s in total.`
+> I implemented 5 tests for basic components: store, mem and hash, takes 1.747 s in total. Moreover, I implemented 1 extra test to detect the need to reconfigure, which takes 22.111 s (including waiting time to make sure periodic check was called suceffully).
 
-> _Performance_ -- spawn times (all students) and gossip (lab/ec-only).
-
-> `I tried 5 spawn and it took 486.122 ms, so latency is 97.22 ms, throughput is 10.29.`
-
-> `I tried gossip with group of 6 nodes, with subset = log(nodes.length),it took 48.468 ms to completes, so latency is 8.078 ms, throughput is 123.79.`
+> _Performance_ -- insertion and retrieval.
 
 ## Key Feature
 
-> What is the point of having a gossip protocol? Why doesn't a node just send the message to _all_ other nodes in its group?
+> Why is the `reconf` method designed to first identify all the keys to be relocated and then relocate individual objects instead of fetching all the objects immediately and then pushing them to their corresponding locations?
 
-> `Gossip protocols efficiently spread information in large distributed systems without overwhelming the network, unlike direct broadcasting. Moreover, they improve fault tolerance, it's acceptable if some node fail to receive message, because the information propagates redundantly through multiple paths.`
+The reconf method first finds which objects need to be moved before actually moving them to avoid storing too much data in memory at once. This makes the system more efficient and prevents issues if a failure happens during the process.

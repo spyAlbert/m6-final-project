@@ -11,6 +11,7 @@ function randomSelect(nodes, n) {
 }
 
 gossip.recv = function (payload, callback) {
+  callback = callback || function () {};
   const message = payload.message;
   const gid = payload.gid;
   const uniqueId = payload.uniqueId;
@@ -26,7 +27,7 @@ gossip.recv = function (payload, callback) {
   }
   visited.add(uniqueId);
   //do the operation locally first
-  distribution.local.comm.send(
+  global.distribution.local.comm.send(
     message,
     { node: global.nodeConfig, ...remote },
     (e, v) => {
@@ -37,7 +38,7 @@ gossip.recv = function (payload, callback) {
       if (v) {
         valueMap[id.getSID(global.nodeConfig)] = v;
       }
-      distribution.local.groups.get(gid, (e, v) => {
+      global.distribution.local.groups.get(gid, (e, v) => {
         if (e) {
           callback(errorMap, valueMap);
           return;
@@ -53,7 +54,7 @@ gossip.recv = function (payload, callback) {
         let sendCount = 0;
         //send all messages for selected pair
         selectedPairs.forEach(([_, node]) => {
-          distribution.local.comm.send(
+          global.distribution.local.comm.send(
             [payload],
             { service: "gossip", method: "recv", node: node },
             (e, v) => {
@@ -69,13 +70,6 @@ gossip.recv = function (payload, callback) {
       });
     }
   );
-};
-gossip.at = function (period, func, callback = () => {}) {
-  callback(null, setInterval(func, period));
-};
-
-gossip.del = function (intervalID, callback = () => {}) {
-  callback(null, clearInterval(intervalID));
 };
 
 module.exports = gossip;

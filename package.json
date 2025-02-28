@@ -27,7 +27,7 @@
   },
   "report": {
     "hours": 40,
-    "loc": 650,
+    "loc": 1250,
     "dev": {
       "cpu-no": 8,
       "mem-gb": 16,

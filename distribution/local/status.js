@@ -3,6 +3,7 @@ const log = require("../util/log");
 const wire = require("../util/wire");
 const serialization = require("../util/serialization");
 const child_process = require("node:child_process");
+const distribution = require("@brown-ds/distribution");
 
 const config = global.nodeConfig;
 const status = {};
@@ -68,11 +69,13 @@ status.spawn = function (configuration, callback) {
 status.stop = function (callback) {
   callback = callback || function () {};
   const localServer = global.distribution.node.server;
-  localServer.close(() => callback(null, config));
-  // set Time out
-  setTimeout(() => {
-    callback(null, config);
-    process.exit(1);
-  }, 120);
+  global.distribution.local.groups.clearAll(() => {
+    localServer.close(() => callback(null, config));
+    // set Time out
+    setTimeout(() => {
+      callback(null, config);
+      process.exit(1);
+    }, 120);
+  });
 };
 module.exports = status;

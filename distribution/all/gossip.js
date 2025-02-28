@@ -22,14 +22,14 @@ const gossip = function (config) {
       // remote should have service and method
       payload.remote = remote;
 
-      distribution.local.groups.get(context.gid, (e, v) => {
+      global.distribution.local.groups.get(context.gid, (e, v) => {
         if (e) {
           callback(e, null);
           return;
         }
         const allNodes = Object.values(v);
         if (allNodes.length === 0) return callback({}, {});
-        distribution.local.comm.send(
+        global.distribution.local.comm.send(
           [payload],
           {
             service: "gossip",
@@ -42,19 +42,15 @@ const gossip = function (config) {
     },
 
     at: (period, func, callback) => {
-      distService.comm.send(
-        [period, func],
-        { service: "gossip", method: "at" },
-        callback
-      );
+      const intervalID = setInterval(func, period);
+      callback(null, intervalID);
+      return intervalID;
     },
 
     del: (intervalID, callback) => {
-      distService.comm.send(
-        [intervalID],
-        { service: "gossip", method: "del" },
-        callback
-      );
+      callback = callback || function () {};
+      clearInterval(intervalID);
+      callback(null, "sucessfully clear");
     },
   };
 };
