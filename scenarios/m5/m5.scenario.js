@@ -190,10 +190,48 @@ test("(10 pts) (scenario) all.mr:tfidf", (done) => {
     TF-IDF = TF * IDF
 */
 
-  const mapper = (key, value) => {};
+  const mapper = (key, value) => {
+    const words = value.replace(/[^\w\s]/g, "").split(/\s+/);
+    const wordCount = {};
+    const totalWords = words.length;
+
+    words.forEach((word) => {
+      wordCount[word] = (wordCount[word] || 0) + 1;
+    });
+
+    const results = [];
+    for (const word in wordCount) {
+      const o = {};
+      o[word] = { doc: key, count: wordCount[word], total: totalWords };
+      results.push(o);
+    }
+
+    return results;
+  };
 
   // Reduce function: calculate TF-IDF for each word
-  const reducer = (key, values) => {};
+  const reducer = (key, values) => {
+    const docFrequency = {};
+    const docCount = {};
+    const totalDocs = new Set();
+
+    values.forEach(({ doc, count, total }) => {
+      totalDocs.add(doc);
+      docFrequency[doc] = count / total;
+      docCount[doc] = (docCount[doc] || 0) + 1;
+    });
+
+    const idf = Math.log10(3 / Object.keys(docFrequency).length);
+
+    const tfidfResults = {};
+    for (const doc in docFrequency) {
+      tfidfResults[doc] = parseFloat((docFrequency[doc] * idf).toFixed(2));
+    }
+    const out = {};
+    out[key] = tfidfResults;
+
+    return out;
+  };
 
   const dataset = [
     { doc1: "machine learning is amazing" },
@@ -273,7 +311,79 @@ test("(10 pts) (scenario) all.mr:strmatch", (done) => {
 });
 
 test("(10 pts) (scenario) all.mr:ridx", (done) => {
-  done(new Error("Implement the map and reduce functions"));
+  //reverse index,  Create a mapping from terms in documents (addressed by identifiers) to object IDs.
+  const mapper = (key, value) => {
+    const words = value.replace(/[^\w\s]/g, "").split(/\s+/);
+
+    return words.map((word) => {
+      let out = {};
+      out[word] = key;
+      return out;
+    });
+  };
+
+  const reducer = (key, values) => {
+    let out = {};
+    const valSet = new Set(values);
+    out[key] = [...valSet];
+    return out;
+  };
+
+  const dataset = [
+    { doc1: "machine learning is amazing" },
+    { doc2: "deep learning powers amazing systems" },
+    { doc3: "machine learning and deep learning are related" },
+  ];
+
+  const expected = [
+    { is: ["doc1"] },
+    { deep: ["doc2", "doc3"] },
+    { systems: ["doc2"] },
+    { learning: ["doc1", "doc2", "doc3"] },
+    { amazing: ["doc1", "doc2"] },
+    { machine: ["doc1", "doc3"] },
+    { are: ["doc3"] },
+    { powers: ["doc2"] },
+    { and: ["doc3"] },
+    { related: ["doc3"] },
+  ];
+
+  const doMapReduce = (cb) => {
+    distribution.tfidf.store.get(null, (e, v) => {
+      try {
+        expect(v.length).toBe(dataset.length);
+      } catch (e) {
+        done(e);
+      }
+
+      distribution.tfidf.mr.exec(
+        { keys: v, map: mapper, reduce: reducer },
+        (e, v) => {
+          try {
+            expect(v).toEqual(expect.arrayContaining(expected));
+            done();
+          } catch (e) {
+            done(e);
+          }
+        }
+      );
+    });
+  };
+
+  let cntr = 0;
+
+  // Send the dataset to the cluster
+  dataset.forEach((o) => {
+    const key = Object.keys(o)[0];
+    const value = o[key];
+    distribution.tfidf.store.put(value, key, (e, v) => {
+      cntr++;
+      // Once the dataset is in place, run the map reduce
+      if (cntr === dataset.length) {
+        doMapReduce();
+      }
+    });
+  });
 });
 
 test("(10 pts) (scenario) all.mr:rlg", (done) => {

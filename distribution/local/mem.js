@@ -124,18 +124,18 @@ function del(configuration, callback) {
   }
 }
 
-function append(stateList, configuration, callback) {
+function append(obj, configuration, callback) {
   get(configuration, (e, v) => {
     let valList = [];
-    if (!e && Array.isArray(v)) {
-      valList = v;
+    if (!e && Array.isArray(v.val)) {
+      valList = v.val;
     }
-    valList = [...valList, ...stateList];
+    valList = [...valList, ...obj.val];
     //store the new valList
-    put(valList, configuration, (e, v) => {
+    obj.val = valList;
+    put(obj, configuration, (e, v) => {
       callback(null, v);
     });
   });
 }
-
 module.exports = { put, get, del, append };

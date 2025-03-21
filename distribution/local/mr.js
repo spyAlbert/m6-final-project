@@ -102,10 +102,11 @@ mr.shuffle = function (keys, gid, nodeGroup, compactor, memWay, callback) {
               responseCount++;
               if (responseCount === allKeys.length) {
                 //shuffle now
-                const allNewKeys = Object.keys(resultMap);
+                const allNewKeys = [];
                 responseCount = 0;
-                for (let newKey of allNewKeys) {
+                for (let newKey of Object.keys(resultMap)) {
                   const kid = id.getID(newKey);
+                  allNewKeys.push(kid);
                   const allNodes = Object.values(nodeGroup);
                   const nids = Object.values(allNodes).map((node) =>
                     id.getNID(node)
@@ -117,8 +118,9 @@ mr.shuffle = function (keys, gid, nodeGroup, compactor, memWay, callback) {
                     service: memWay,
                     method: "append",
                   };
+                  const currObj = { key: newKey, val: resultMap[newKey] };
                   global.distribution.local.comm.send(
-                    [resultMap[newKey], { key: newKey, gid: gid }],
+                    [currObj, { key: kid, gid: gid }],
                     remote,
                     (e, v) => {
                       // let valList = [];
@@ -182,15 +184,16 @@ mr.reduce = function (serviceName, keys, gid, out, memWay, callback) {
     for (let key of allKeys) {
       global.distribution.local[memWay].get(
         { key: key, gid: gid },
-        (e, valList) => {
+        (e, obj) => {
+          let valList = obj.val;
           if (e) return callback(e, null);
           global.distribution.local.routes.get(serviceName, (e, v) => {
             reducer = v.reduce;
-            v = reducer(key, valList);
+            v = reducer(obj.key, valList);
 
             result.push(v);
             if (out) {
-              let newKey = `${out}_${key}`;
+              let newKey = `${out}_${obj.key}`;
               global.distribution[gid].store.put(v, newKey, (e, v) => {
                 global.distribution.local[memWay].del(
                   { key: key, gid: gid },
