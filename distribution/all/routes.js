@@ -19,17 +19,12 @@ function routes(config) {
   }
 
   /**
-   * @param {object} service
    * @param {string} name
    * @param {Callback} callback
    */
-  function rem(service, name, callback = () => {}) {
+  function rem(name, callback = () => {}) {
     const remote = { service: "routes", method: "rem" };
-    global.distribution[context.gid].comm.send(
-      [service, name],
-      remote,
-      callback
-    );
+    global.distribution[context.gid].comm.send([name], remote, callback);
   }
 
   return { put, rem };

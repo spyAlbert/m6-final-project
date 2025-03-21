@@ -124,4 +124,18 @@ function del(configuration, callback) {
   }
 }
 
-module.exports = { put, get, del };
+function append(stateList, configuration, callback) {
+  get(configuration, (e, v) => {
+    let valList = [];
+    if (!e && Array.isArray(v)) {
+      valList = v;
+    }
+    valList = [...valList, ...stateList];
+    //store the new valList
+    put(valList, configuration, (e, v) => {
+      callback(null, v);
+    });
+  });
+}
+
+module.exports = { put, get, del, append };

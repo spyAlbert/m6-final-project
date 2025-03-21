@@ -20,6 +20,7 @@ function send(message, remote, callback) {
   if (!callback || typeof callback !== "function") {
     callback = function () {};
   }
+
   message = message || [];
   global.moreStatus.counts++;
   if (remote === undefined) {

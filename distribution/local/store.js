@@ -42,12 +42,14 @@ function put(state, configuration, callback) {
     key = key.replace(/[^a-zA-Z0-9]/g, "_");
   }
   const filePath = path.join(finalPath, key);
-  fs.writeFile(filePath, serialization.serialize(state), (err) => {
-    if (err) {
-      return callback(new Error(err), null);
-    }
-    callback(null, state);
-  });
+  fs.writeFileSync(filePath, serialization.serialize(state));
+  callback(null, state);
+  // fs.writeFile(filePath, serialization.serialize(state), (err) => {
+  //   if (err) {
+  //     return callback(new Error(err), null);
+  //   }
+  //   callback(null, state);
+  // });
 }
 
 function get(configuration, callback) {
@@ -80,13 +82,23 @@ function get(configuration, callback) {
   }
   key = key.replace(/[^a-zA-Z0-9]/g, "_");
   const filePath = path.join(finalPath, key);
-  fs.readFile(filePath, (err, data) => {
-    if (err) {
-      return callback(new Error(err), null);
-    } else {
-      return callback(null, serialization.deserialize(data));
-    }
-  });
+  try {
+    const data = fs.readFileSync(filePath, "utf8");
+    callback(null, serialization.deserialize(data));
+  } catch (error) {
+    callback(error, null);
+  }
+  // fs.readFile(filePath, (err, data) => {
+  //   if (err) {
+  //     return callback(new Error(err), null);
+  //   } else {
+  //     try {
+  //       callback(null, serialization.deserialize(data));
+  //     } catch (error) {
+  //       callback(error, null);
+  //     }
+  //   }
+  // });
 }
 
 function del(configuration, callback) {
@@ -128,4 +140,18 @@ function del(configuration, callback) {
   }
 }
 
-module.exports = { put, get, del };
+function append(stateList, configuration, callback) {
+  get(configuration, (e, v) => {
+    let valList = [];
+    if (!e && Array.isArray(v)) {
+      valList = v;
+    }
+    valList = [...valList, ...stateList];
+    //store the new valList
+    put(valList, configuration, (e, v) => {
+      callback(null, v);
+    });
+  });
+}
+
+module.exports = { put, get, del, append };

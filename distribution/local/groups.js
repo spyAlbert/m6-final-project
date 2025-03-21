@@ -76,6 +76,9 @@ groups.put = function (config, group, callback) {
     global.distribution[config].store = require("../all/store")({
       gid: config,
     });
+    global.distribution[config].mr = require("../all/mr")({
+      gid: config,
+    });
     //store
     groups[config] = group;
   } else {
@@ -91,6 +94,7 @@ groups.put = function (config, group, callback) {
       global.distribution[config.gid].routes = require("../all/routes")(config);
       global.distribution[config.gid].mem = require("../all/mem")(config);
       global.distribution[config.gid].store = require("../all/store")(config);
+      global.distribution[config.gid].mr = require("../all/mr")(config);
       //store
       groups[config.gid] = group;
       gid = config.gid;
@@ -121,7 +125,6 @@ groups.put = function (config, group, callback) {
       }
     },
     (err, intervalID) => {
-      console.log("Started periodic node check with ID:", intervalID);
       idMap[gid] = intervalID;
     }
   );
