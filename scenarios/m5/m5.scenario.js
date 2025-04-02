@@ -298,17 +298,17 @@ test("(10 pts) (scenario) all.mr:tfidf", (done) => {
   - Run the map reduce.
 */
 
-test("(10 pts) (scenario) all.mr:crawl", (done) => {
-  done(new Error("Implement this test."));
-});
+// test("(10 pts) (scenario) all.mr:crawl", (done) => {
+//   done(new Error("Implement this test."));
+// });
 
-test("(10 pts) (scenario) all.mr:urlxtr", (done) => {
-  done(new Error("Implement the map and reduce functions"));
-});
+// test("(10 pts) (scenario) all.mr:urlxtr", (done) => {
+//   done(new Error("Implement the map and reduce functions"));
+// });
 
-test("(10 pts) (scenario) all.mr:strmatch", (done) => {
-  done(new Error("Implement the map and reduce functions"));
-});
+// test("(10 pts) (scenario) all.mr:strmatch", (done) => {
+//   done(new Error("Implement the map and reduce functions"));
+// });
 
 test("(10 pts) (scenario) all.mr:ridx", (done) => {
   //reverse index,  Create a mapping from terms in documents (addressed by identifiers) to object IDs.
@@ -349,14 +349,14 @@ test("(10 pts) (scenario) all.mr:ridx", (done) => {
   ];
 
   const doMapReduce = (cb) => {
-    distribution.tfidf.store.get(null, (e, v) => {
+    distribution.ridx.store.get(null, (e, v) => {
       try {
         expect(v.length).toBe(dataset.length);
       } catch (e) {
         done(e);
       }
 
-      distribution.tfidf.mr.exec(
+      distribution.ridx.mr.exec(
         { keys: v, map: mapper, reduce: reducer },
         (e, v) => {
           try {
@@ -376,7 +376,7 @@ test("(10 pts) (scenario) all.mr:ridx", (done) => {
   dataset.forEach((o) => {
     const key = Object.keys(o)[0];
     const value = o[key];
-    distribution.tfidf.store.put(value, key, (e, v) => {
+    distribution.ridx.store.put(value, key, (e, v) => {
       cntr++;
       // Once the dataset is in place, run the map reduce
       if (cntr === dataset.length) {
@@ -384,10 +384,6 @@ test("(10 pts) (scenario) all.mr:ridx", (done) => {
       }
     });
   });
-});
-
-test("(10 pts) (scenario) all.mr:rlg", (done) => {
-  done(new Error("Implement the map and reduce functions"));
 });
 
 /*
@@ -454,7 +450,20 @@ beforeAll((done) => {
                   tfidfConfig,
                   tfidfGroup,
                   (e, v) => {
-                    done();
+                    const ridxConfig = { gid: "ridx" };
+                    distribution.local.groups.put(
+                      ridxConfig,
+                      ridxGroup,
+                      (e, v) => {
+                        distribution.tfidf.groups.put(
+                          ridxConfig,
+                          ridxGroup,
+                          (e, v) => {
+                            done();
+                          }
+                        );
+                      }
+                    );
                   }
                 );
               });
