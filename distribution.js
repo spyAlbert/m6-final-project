@@ -4,6 +4,9 @@ const util = require("./distribution/util/util.js");
 const log = require("./distribution/util/log.js");
 const args = require("yargs").argv;
 
+//fetch fun for crawler
+global.fetch = require("sync-fetch");
+
 // Default configuration
 global.nodeConfig = global.nodeConfig || {
   ip: "127.0.0.1",
