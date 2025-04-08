@@ -89,13 +89,15 @@ function mr(config) {
                     [serviceName, allKeyList, context.gid, out, memWay],
                     remote,
                     (e, v) => {
-                      const resultList = [];
+                      let resultList = [];
                       const allValList = Object.values(v);
                       for (let currList of allValList) {
                         for (let objVal of currList) {
                           resultList.push(objVal);
                         }
                       }
+                      //flat
+                      resultList = resultList.flat();
                       // deregister
                       global.distribution[context.gid].routes.rem(
                         serviceName,
@@ -111,6 +113,8 @@ function mr(config) {
                               configuration.rounds = rounds;
                               //change dataset first
                               let cntr = 0;
+                              console.log(resultList.length);
+
                               // Send the dataset to the cluster
                               resultList.forEach((o) => {
                                 const key = Object.keys(o)[0];
@@ -122,8 +126,10 @@ function mr(config) {
                                     cntr++;
                                     // Once the dataset is in place, run the map reduce
                                     if (cntr === resultList.length) {
+                                      console.log(resultList.length);
                                       configuration.keys =
                                         getDatasetKeys(resultList);
+                                      console.log(configuration.keys);
                                       exec(configuration, cb);
                                     }
                                   }
