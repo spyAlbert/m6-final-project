@@ -2,11 +2,11 @@ let crawler = {};
 crawler.map = (key, _value) => {
   const pkgName = key;
   const pkgID = distribution.util.id.getID(pkgName);
-  console.log(key);
   if (!global.visited) {
     global.visited = new Set();
   }
-  if (global.visited.has(pkgName)) return null;
+  if (global.visited.has(pkgName)) return [];
+  console.log(`crawling: ${key}`);
   global.visited.add(pkgName);
   const url = `https://registry.npmjs.org/${pkgName}`;
   let metadata;
@@ -14,7 +14,7 @@ crawler.map = (key, _value) => {
   try {
     metadata = global.fetch(url).json(); // JSON object
   } catch (e) {
-    return null;
+    return [];
   }
 
   // Delay (to be polite)
@@ -32,14 +32,9 @@ crawler.map = (key, _value) => {
     dependencies: latestMeta.dependencies || {},
   };
 
-  const textKey = `${pkgID}+metadata`;
-  distribution.all.store.put({ [pkgName]: extracted }, textKey, (e, _v) => {
-    if (e) return null;
-  });
-
   // Prepare list of new packages to crawl
   const deps = Object.keys(extracted.dependencies);
-  return { [pkgName]: deps };
+  return { output: { [pkgName]: deps}, forStoring: extracted };
 };
 
 crawler.reduce = (key, values) => {

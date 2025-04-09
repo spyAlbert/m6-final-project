@@ -1,7 +1,7 @@
 const id = require("../util/id");
 
 const mr = {};
-mr.map = function (serviceName, keys, gid, memWay, callback) {
+mr.map = function (serviceName, keys, gid, out, memWay, callback) {
   callback = callback || function () {};
   //get all keys in store
   global.distribution.local.store.get({ gid: gid }, (e, v) => {
@@ -17,13 +17,19 @@ mr.map = function (serviceName, keys, gid, memWay, callback) {
       return callback(null, allKeys);
     }
     let responseCount = 0;
+    const handleResponse = (e, v) => {
+      if (++responseCount === allKeys.length) {
+        callback(e, v);
+      }
+    }
     for (let key of allKeys) {
       global.distribution.local.store.get({ key: key, gid: gid }, (e, val) => {
-        if (e) return callback(e, null);
+        if (e) return handleResponse(e, val);
         global.distribution.local.routes.get(serviceName, (e, v) => {
           // change the val to new val
           let mapper = v.map;
-          v = mapper(key, val);
+          const mapOutput = mapper(key, val);
+          v = mapOutput.output || mapOutput;
           let newKey = key + "_intermidate";
           global.distribution.local[memWay].put(
             v,
@@ -32,11 +38,15 @@ mr.map = function (serviceName, keys, gid, memWay, callback) {
               global.distribution.local.store.del(
                 { key: key, gid: gid },
                 (e, v) => {
-                  responseCount++;
-                  if (responseCount === allKeys.length) {
-                    return callback(null, allKeys);
+                  if (out) {
+                    global.distribution.local.store.put(mapOutput.forStoring, {key: key, gid: out}, (e, v) => {
+                      if (e) console.log(`failed to store ${key} for ${out}`, e);
+                      handleResponse(e, v);
+                    });
+                  } else {
+                    return handleResponse(e, v);
                   }
-                }
+                },
               );
             }
           );
@@ -64,11 +74,47 @@ mr.shuffle = function (keys, gid, nodeGroup, compactor, memWay, callback) {
     }
     let responseCount = 0;
     const resultMap = {};
+    const performShuffle = () => {
+      //shuffle now
+      const allNewKeys = [];
+      let responseCount = 0;
+      for (let newKey of Object.keys(resultMap)) {
+        const kid = id.getID(newKey);
+        allNewKeys.push(kid);
+        const allNodes = Object.values(nodeGroup);
+        const nids = Object.values(allNodes).map((node) =>
+          id.getNID(node)
+        );
+        const nid = id.consistentHash(kid, nids);
+        const node = nodeGroup[nid.substring(0, 5)];
+        const remote = {
+          node: node,
+          service: memWay,
+          method: "append",
+        };
+        const currObj = { key: newKey, val: resultMap[newKey] };
+        global.distribution.local.comm.send(
+          [currObj, { key: kid, gid: gid }],
+          remote,
+          (e, v) => {
+            responseCount++;
+            if (responseCount === allNewKeys.length) {
+              return callback(null, allNewKeys);
+            }
+          }
+        );
+      }
+    }
+    const handleResponse = (e, v) => {
+      if (++responseCount === allKeys.length) {
+        performShuffle();
+      }
+    }
     for (let key of allKeys) {
       global.distribution.local[memWay].get(
         { key: key, gid: gid },
         (e, val) => {
-          if (e) return callback(e, null);
+          if (e) return handleResponse(e, val);
           if (compactor) {
             val = compactor(val);
           }
@@ -98,65 +144,7 @@ mr.shuffle = function (keys, gid, nodeGroup, compactor, memWay, callback) {
           //delete the intermidate
           global.distribution.local[memWay].del(
             { key: key, gid: gid },
-            (e, v) => {
-              responseCount++;
-              if (responseCount === allKeys.length) {
-                //shuffle now
-                const allNewKeys = [];
-                responseCount = 0;
-                for (let newKey of Object.keys(resultMap)) {
-                  const kid = id.getID(newKey);
-                  allNewKeys.push(kid);
-                  const allNodes = Object.values(nodeGroup);
-                  const nids = Object.values(allNodes).map((node) =>
-                    id.getNID(node)
-                  );
-                  const nid = id.consistentHash(kid, nids);
-                  const node = nodeGroup[nid.substring(0, 5)];
-                  const remote = {
-                    node: node,
-                    service: memWay,
-                    method: "append",
-                  };
-                  const currObj = { key: newKey, val: resultMap[newKey] };
-                  global.distribution.local.comm.send(
-                    [currObj, { key: kid, gid: gid }],
-                    remote,
-                    (e, v) => {
-                      // let valList = [];
-                      // if (!e && Array.isArray(v)) {
-                      //   valList = v;
-                      // }
-                      // valList = [...valList, ...resultMap[newKey]];
-                      // console.log(
-                      //   `neeeeewkey: ${newKey}, valList: ${valList}, orrrrrrignz ${v}`
-                      // );
-                      // //store the new valList
-                      // remote.method = "put";
-                      // global.distribution.local.comm.send(
-                      //   [valList, { key: newKey, gid: gid }],
-                      //   remote,
-                      //   (e, v) => {
-                      //     if (newKey === "1949" || newKey === "1950")
-                      //       console.log(
-                      //         `responseCount ::::::::::::::: ${responseCount}/${allNewKeys.length} e::::::::${e}`
-                      //       );
-                      //     console.log();
-                      //     responseCount++;
-                      //     if (responseCount === allNewKeys.length) {
-                      //       return callback(null, allNewKeys);
-                      //     }
-                      //   }
-                      // );
-                      responseCount++;
-                      if (responseCount === allNewKeys.length) {
-                        return callback(null, allNewKeys);
-                      }
-                    }
-                  );
-                }
-              }
-            }
+            handleResponse,
           );
           //
         }
@@ -181,39 +169,35 @@ mr.reduce = function (serviceName, keys, gid, out, memWay, callback) {
     }
     const result = [];
     let responseCount = 0;
+    const handleResponse = (e, v) => {
+      if (++responseCount === allKeys.length) {
+        callback(e, result);
+      }
+    }
     for (let key of allKeys) {
       global.distribution.local[memWay].get(
         { key: key, gid: gid },
         (e, obj) => {
           let valList = obj.val;
-          if (e) return callback(e, null);
+          if (e) return handleResponse(e, obj);
           global.distribution.local.routes.get(serviceName, (e, v) => {
             reducer = v.reduce;
             v = reducer(obj.key, valList);
 
             result.push(v);
             if (out) {
-              let newKey = `${out}_${obj.key}`;
-              global.distribution[gid].store.put(v, newKey, (e, v) => {
+              let newKey = Object.keys(v)[0];
+              global.distribution.local.store.put(v[newKey], {key: newKey, gid: out}, (e, v) => {
+                if (e) console.log(`failed to store ${newKey} for ${out}`, e);
                 global.distribution.local[memWay].del(
                   { key: key, gid: gid },
-                  (e, v) => {
-                    responseCount++;
-                    if (responseCount === allKeys.length) {
-                      return callback(null, result);
-                    }
-                  }
+                  handleResponse,
                 );
               });
             } else {
               global.distribution.local[memWay].del(
                 { key: key, gid: gid },
-                (e, v) => {
-                  responseCount++;
-                  if (responseCount === allKeys.length) {
-                    return callback(null, result);
-                  }
-                }
+                handleResponse,
               );
             }
           });
