@@ -108,14 +108,14 @@ function runEngine() {
             keys: rootPackages,
             mapOut: "index",
           };
-          // TODO: insert page rank calculations here
           distribution.all.mr.exec(mrConfig, (e, v) => {
+            // TODO: insert page rank calculations here
             console.log("\n\n\n------STARTING INDEXING------\n\n\n");
             indexer.performIndexing((e, v) => {
               console.log("\n\n\n------SHUTTING DOWN NODES------\n\n\n");
               cleanUpNodes();
             });
-          })
+          });
         });
       });
     });
