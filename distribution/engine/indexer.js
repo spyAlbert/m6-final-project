@@ -56,17 +56,4 @@ indexer.reduce = function (nGram, results) {
   return output;
 }
 
-indexer.performIndexing = function (callback) {
-  callback = callback || function() {};
-  distribution.index.store.get(null, (e, v) => {
-    const mrConfig = {
-      map: indexer.map,
-      reduce: indexer.reduce,
-      keys: v,
-      reduceOut: "query",
-    }
-    distribution.index.mr.exec(mrConfig, callback);
-  });
-}
-
 module.exports = indexer;

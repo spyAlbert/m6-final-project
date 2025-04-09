@@ -101,19 +101,27 @@ function runEngine() {
       setupGroups(() => {
         setupCrawler(() => {
           console.log("\n\n\n------STARTING CRAWLING------\n\n\n");
-          const mrConfig = {
+          const mrCrawlConfig = {
             map: crawler.map,
             reduce: crawler.reduce,
             rounds: 4, // TODO: figure out best number of rounds or make mapreduce detect when its found all (or a sufficient amount) of packages
             keys: rootPackages,
             mapOut: "index",
           };
-          distribution.all.mr.exec(mrConfig, (e, v) => {
+          distribution.all.mr.exec(mrCrawlConfig, (e, v) => {
             // TODO: insert page rank calculations here
             console.log("\n\n\n------STARTING INDEXING------\n\n\n");
-            indexer.performIndexing((e, v) => {
-              console.log("\n\n\n------SHUTTING DOWN NODES------\n\n\n");
-              cleanUpNodes();
+            distribution.index.store.get(null, (e, packageNames) => {
+              const mrIndexConfig = {
+                map: indexer.map,
+                reduce: indexer.reduce,
+                keys: packageNames,
+                reduceOut: "query",
+              }
+              distribution.index.mr.exec(mrIndexConfig, (e, v) => {
+                console.log("\n\n\n------SHUTTING DOWN NODES------\n\n\n");
+                cleanUpNodes();
+              });
             });
           });
         });

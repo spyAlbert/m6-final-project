@@ -2,11 +2,11 @@ let crawler = {};
 crawler.map = (key, _value) => {
   const pkgName = key;
   const pkgID = distribution.util.id.getID(pkgName);
-  console.log(`crawling: ${key}`);
   if (!global.visited) {
     global.visited = new Set();
   }
   if (global.visited.has(pkgName)) return [];
+  console.log(`crawling: ${key}`);
   global.visited.add(pkgName);
   const url = `https://registry.npmjs.org/${pkgName}`;
   let metadata;
