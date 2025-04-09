@@ -50,7 +50,8 @@ function mr(config) {
     const mapReduceService = { map: mapper, reduce: reducer };
     const compactor = configuration.compact;
     const memWay = configuration.memory ? "mem" : "store";
-    const out = configuration.out;
+    const mapOut = configuration.mapOut;
+    const reduceOut = configuration.reduceOut;
     let rounds = configuration.rounds;
     currId++;
     const serviceName = "mr-" + currId;
@@ -68,7 +69,7 @@ function mr(config) {
           //ready to do map
           const remote = { service: "mr", method: "map" };
           global.distribution[context.gid].comm.send(
-            [serviceName, keys, context.gid, memWay],
+            [serviceName, keys, context.gid, mapOut, memWay],
             remote,
             (e, v) => {
               remote.method = "shuffle";
@@ -86,7 +87,7 @@ function mr(config) {
                   remote.method = "reduce";
                   const allKeyList = Array.from(allNewKeys);
                   global.distribution[context.gid].comm.send(
-                    [serviceName, allKeyList, context.gid, out, memWay],
+                    [serviceName, allKeyList, context.gid, reduceOut, memWay],
                     remote,
                     (e, v) => {
                       let resultList = [];
@@ -106,7 +107,7 @@ function mr(config) {
                             return cb(null, resultList);
                           } else {
                             rounds--;
-                            if (rounds === 0) {
+                            if (rounds === 0 || resultList.length === 0) {
                               return cb(null, resultList);
                             } else {
                               //next round

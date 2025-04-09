@@ -7,6 +7,18 @@ const args = require("yargs").argv;
 //fetch fun for crawler
 global.fetch = require("sync-fetch");
 
+// imports used by indexer (though they really slow down node creation, 
+// perhaps there's a better way to do it)
+const natural = require('natural');
+global.stemmer = natural.PorterStemmer;
+const fs = require('fs');
+global.stopwords = new Set(
+  fs.readFileSync('non-distribution/d/stopwords.txt', 'utf-8')
+    .split('\n')
+    .map((word) => word.trim())
+    .filter((word) => word.length > 0),
+);
+
 // Default configuration
 global.nodeConfig = global.nodeConfig || {
   ip: "127.0.0.1",
