@@ -203,4 +203,20 @@ mr.reduce = function (serviceName, keys, gid, out, memWay, callback) {
     }
   });
 };
+
+
+// mr.query = function (indexFile, args, callback) {
+//   // Normalize, remove stopwords, and stem the query using existing components
+//   const processedQuery = execSync(
+//       `echo "${args}" | ./c/process.sh | ./c/stem.js | tr "\r\n" "  "`,
+//       {encoding: 'utf-8'},
+//   ).trim();
+//   // Search the global index using the processed query string
+//   const searchResults = execSync(`grep "${processedQuery}" ${indexFile}`, {
+//     encoding: 'utf-8',
+//   });
+//   // Print the matching lines from the global index file
+//   console.log(searchResults.trim());
+// }
+
 module.exports = mr;
