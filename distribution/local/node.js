@@ -27,11 +27,11 @@ const start = function (callback) {
     // Write some code...
 
     const path = url.parse(req.url, true);
-    console.log(path.pathname);
+    // console.log(path.pathname);
     const pathParts = path.pathname.split("/");
     if (pathParts.length !== 4) {
       res.writeHead(400, { "Content-Type": "application/json" });
-      console.log(pathParts);
+      // console.log(pathParts);
       return res.end(util.serialize(new Error("Not a valid path")));
     }
 

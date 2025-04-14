@@ -1,3 +1,20 @@
+process.removeAllListeners('warning'); // Remove default warning handlers
+
+// Optional: Custom warning handler
+process.on('warning', (warning) => {
+  // Filter out specific warnings you want to ignore
+  if (
+    warning.name === 'DeprecationWarning' || 
+    warning.name === 'ExperimentalWarning'
+  ) {
+    return;
+  }
+  console.warn(warning);
+});
+
+// Set environment variable to suppress experimental warnings
+process.env.NODE_NO_WARNINGS = '1';
+
 const query = require('./query.js');
 const repl = require('repl');
 const distribution = require("./config.js");
@@ -22,7 +39,6 @@ function startNodes(cb) {
   };
   function setupGroups(cb) {
     // For now, put all nodes in all groups
-    nodes.push(global.nodeConfig);
     for (const node of nodes) {
       const sid = id.getSID(node);
       for (const group of Object.values(groups)) {
@@ -70,26 +86,70 @@ function startNodes(cb) {
     startNodes(() => {
         setupGroups(() => {
         console.log("Nodes started");
+        console.log("Enter q to quit | Enter h for help");
         // get all keys
-        distribution.query.store.get(null, (e,words)=>{           
-                repl.start({
-                prompt: 'ngram> ',
-                eval: (cmd, context, filename, callback) => {
-                    const input = cmd.trim();
-                
-                    if (input === 'quit') {
-                    console.log('Exiting...');
-                    cleanUpNodes();
-                    }else{
-                    const args = input.split(/\s+/);
-                    console.log("inputs received:", args);
-                    // Call your function
-                    query(args, words, callback);
-                    }
-                }
-            });
+        distribution.query.store.get(null, (e, words) => {
+          repl.start({
+              prompt: 'ngram> ',
+              eval: (cmd, context, filename, callback) => {
+                  const input = cmd.trim();
+                              // Help command
+            if (input === 'h') {
+              const helpText = `
+              Available commands:
+              ------------------
+              h          - Show this help message
+              q          - Exit the program
+              <search term> - Search for packages matching the term
 
-        });
+              Examples:
+              ngram> express       - Search for packages related to 'express'
+              ngram> q             - Exit the program
+              ngram> h             - Show this help message
+              `;
+              callback(null, helpText);
+              return;
+          }
+                  if (input === ""){
+                    callback(null);
+                    return
+                  } 
+                  if (input === 'q') {
+                      console.log('Exiting...');
+                      cleanUpNodes();
+              
+                  }else {
+                      const args = input.split(/\s+/);
+                      console.log("inputs received:", args);
+                      
+                      query(args, words, (error, results) => {
+                          if (error) {
+                              callback(error);
+                              return;
+                          }
+                          
+                          // Format the results prettily
+                          if (Array.isArray(results) && results.length > 0) {
+                              console.log("\nSearch Results:");
+                              console.log("---------------");
+                              
+                              results.forEach((result, index) => {
+                                  console.log(`\nResult ${index + 1}:`);
+                                  for (const [key, value] of Object.entries(result)) {
+                                      console.log(`  ${key.padEnd(15)}: ${value}`);
+                                  }
+                              });
+                              
+                              console.log("\n");
+                              callback(null, `${results.length} results found`);
+                          } else {
+                              callback(null, "No results found");
+                          }
+                      });
+                  }
+              }
+          });
     });
   });
+});
   });

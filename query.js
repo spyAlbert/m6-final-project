@@ -1,25 +1,32 @@
 
-const didYouMean = require('didyoumean2').default
-
+const {
+  default: didYouMean,
+  ReturnTypeEnums,
+  ThresholdTypeEnums,
+} = require('didyoumean2')
 // const fs = require('fs');
 const {execSync} = require('child_process');
 // const path = require('path');
 const distribution = require("./config.js");
 
 function query_iteration_help(tries,list,total_res,cb){
-  console.log(list)
-  console.log(total_res)
+  // console.log(list)
+  // console.log(total_res)
   if (tries == list.length || total_res.size >= 4){
     // console.log("enters the callback of iteration");
     cb(null,total_res);
     return;
   }
   distribution.query.store.get(list[tries],(e,v)=>{
+    // console.log("input to store get is")
+    // console.log(list[tries])
     // console.log("query store get")
+    // console.log("output of store get is")
     // console.log(v);
     // console.log("above is the result from query store get")
     for (let i in v){
-      total_res.add(JSON.stringify(v[i]));
+      const trimed = {Package:v[i].package,Description:v[i].description}
+      total_res.add(JSON.stringify(trimed));
     }
     // console.log(e);
     tries++;
@@ -29,6 +36,7 @@ function query_iteration_help(tries,list,total_res,cb){
 }
 function query(processedQuery, cb) {
     // Normalize, remove stopwords, and stem the query using existing components
+    // console.log("processed string is")
     // console.log(processedQuery);
     // Search the global index using the processed query string
     // const searchResults = execSync(`grep "${processedQuery}" ${indexFile}`, {
@@ -68,6 +76,9 @@ function query(processedQuery, cb) {
       `echo "${args}" | ./non-distribution/c/process.sh | ./non-distribution/c/stem.js | tr "\r\n" "  "`,
       {encoding: 'utf-8'},
   ).trim();
+  if (!processedQuery){
+    processedQuery = args.join("_");
+  }
   // console.log("processed query is", processedQuery);
     query(processedQuery, (e,outSet, n_grams)=>{
       // console.log(outSet);
@@ -79,28 +90,49 @@ function query(processedQuery, cb) {
             words = words.filter(word => word !== n_gram); //make sure I don't get what I have processed
             // console.log("here",words, n_gram);
           }
-          const closest = didYouMean(processedQuery, words);
-          if (closest!=null){
-            query(closest,(e,spellSet,n_grams)=>{
-              console.log("after spell check");
-              const concatenatedSet = new Set([...outSet, ...spellSet]);
+          // const closest = didYouMean(processedQuery, words);
+          // const closest = didYouMean(processedQuery, words);
+          const closests = didYouMean(processedQuery, words,   {
+            returnType: ReturnTypeEnums.ALL_CLOSEST_MATCHES
+          });
+          // console.log(closests);
+          let count = 0;
+          let resSet = new Set();
+          for (let item of outSet){
+            resSet.add(JSON.parse(item));
+          }
+          for (const word of closests){
+            query(word,(e,spellSet,n_grams)=>{
+              // console.log("after spell check");
+              // concatenatedSet = new Set([...outSet, ...spellSet]);
             //   console.log(concatenatedSet);
-              const resSet = new Set();
-              for (let item of concatenatedSet){
+            count++;
+              for (let item of spellSet){
                 resSet.add(JSON.parse(item));
               }
-            
-              cb(e,resSet);
+              if (count == closests.length){
+                cb(e,[...resSet]);  
+              }
             })
           }
+            // const resSet = new Set();
+            // query(closest,(e,spellSet,n_grams)=>{
+            //     // console.log("after spell check");
+            //     const concatenatedSet = new Set([...outSet, ...spellSet]);
+            //   //   console.log(concatenatedSet);
+            //     for (let item of concatenatedSet){
+            //       resSet.add(JSON.parse(item));
+            //     }
+            //     cb(e,[...resSet]);  
+            // })
       }else{
-        console.log("direct output");
+        // console.log("direct output");
         const resSet = new Set();
         for (let item of outSet){
           resSet.add(JSON.parse(item));
         }
-      
-        cb(e,resSet);  
+        
+        cb(e,[...resSet]);  
       }
     });   
   }

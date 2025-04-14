@@ -48,7 +48,7 @@ status.spawn = function (configuration, callback) {
   callback = callback || function () {};
   const { onStart, ...remainConfigs } = configuration;
   const internalFun = () => {
-    console.log("internalFun called!");
+    // console.log("internalFun called!");
     if (onStart) {
       onStart();
     }

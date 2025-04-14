@@ -44,9 +44,9 @@ function store(config) {
           const kid = id.getID(key);
           const nodeNID = context.hash(kid, nids);
           const node = nidMap[nodeNID];
-          console.log("in all store get");
-          console.log(configuration);
-          console.log(nodeNID);
+          // console.log("in all store get");
+          // console.log(configuration);
+          // console.log(nodeNID);
           const remote = { node: node, service: "store", method: "get" };
           const newConfig = { gid: context.gid, key: key };
           global.distribution.local.comm.send([newConfig], remote, callback);
@@ -129,18 +129,18 @@ function store(config) {
           const newGroupsNids = Object.values(newGroups).map((node) =>
             id.getNID(node)
           );
-          console.log(allKeys);
+          // console.log(allKeys);
           const total = allKeys.length;
           let check = 0;
           if (total === 0) return callback(null, "no keys to reconfig");
           for (let key of allKeys) {
             const kid = id.getID(key);
-            console.log(key);
+            // console.log(key);
             const oldNid = context.hash(kid, oldGroupsNids);
-            console.log(oldNid);
+            // console.log(oldNid);
 
             const newNid = context.hash(kid, newGroupsNids);
-            console.log(newNid);
+            // console.log(newNid);
             const newConfig = { gid: context.gid, key: key };
             if (oldNid !== newNid) {
               //need to reconfig
