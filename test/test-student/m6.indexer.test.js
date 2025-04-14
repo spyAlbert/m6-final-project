@@ -17,29 +17,50 @@ jest.setTimeout(3600000);
 test("M6: basic index test", (done) => {
   const indexer = require("../../distribution/engine/indexer.js");
 
+  const pkgA = { package: "packageA", description: "single individual", pagerank: 10 };
+  const pkgB = { package: "packageB", description: "document scenario single", pagerank:  5};
+  const pkgC = { package: "packageC", description: "single document scenario document scenario distributed", pagerank: 1 };
+
   const dataset = [
-    { "packageA": { description: "single" }},
-    { "packageB": { description: "document scenario" } },
-    { "packageC": { description: "document scenario document scenario distributed" } },
+    { "packageA": pkgA},
+    { "packageB": pkgB },
+    { "packageC": pkgC },
   ];
 
   const expected = [
-    { packageA: [{package: "packageA", count: 1}] }, 
-    { packageB: [{package: "packageB", count: 1}] }, 
-    { packageC: [{package: "packageC", count: 1}] }, 
-    { singl: [{package: "packageA", count: 1}] }, 
-    { document: [{package: "packageC", count: 2}, {package: "packageB", count: 1}] }, 
-    { scenario: [{package: "packageC", count: 2}, {package: "packageB", count: 1}] }, 
-    { distribut: [{package: "packageC", count: 1}] }, 
-    { "document scenario": [{package: "packageC", count: 3}, {package: "packageB", count: 1}] },
-    { "distribut scenario": [{package: "packageC", count: 1}] },
-    { "document document scenario": [{package: "packageC", count: 1}] },
-    { "document scenario scenario": [{package: "packageC", count: 1}] },
-    { "distribut document scenario": [{package: "packageC", count: 1}] },
+    { packageA: [pkgA] }, 
+    { packageB: [pkgB] }, 
+    { packageC: [pkgC] }, 
+    { individu: [pkgA]},
+    { singl: [pkgA, pkgB, pkgC] }, 
+    { document: [pkgB, pkgC] }, 
+    { scenario: [pkgB, pkgC] }, 
+    { distribut: [pkgC] }, 
+    { "individu singl": [pkgA] },
+    { "document scenario": [pkgB, pkgC] },
+    { "scenario singl": [pkgB] },
+    { "document singl": [pkgC] },
+    { "distribut scenario": [pkgC] },
+    { "document scenario singl": [pkgB, pkgC] },
+    { "document document scenario": [pkgC] },
+    { "document scenario scenario": [pkgC] },
+    { "distribut document scenario": [pkgC] },
   ];
 
   const doMapReduce = (cb) => {
-    indexer.performIndexing((e, v) => {
+    const mrIndexConfig = {
+      map: indexer.map,
+      reduce: indexer.reduce,
+      keys: ["packageA", "packageB", "packageC"],
+    };
+    console.log("about to mapreduce?");
+    distribution.index.mr.exec(mrIndexConfig, (e, v) => {
+      for (const item of expected) {
+        const key = Object.keys(item)[0];
+        console.log("NGRAM:", key);
+        console.log("EXPECTED:", item[key]);
+        console.log("ACTUAL:", v.find(i => Object.keys(i)[0] === key));
+      }
       try {
         expect(v).toEqual(expect.arrayContaining(expected));
         done();
