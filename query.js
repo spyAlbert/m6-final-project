@@ -6,24 +6,20 @@ const {execSync} = require('child_process');
 // const path = require('path');
 const distribution = require("./config.js");
 
-function close(){
-  const remote = { service: "status", method: "stop" };
-  remote.node = n1;
-  distribution.local.comm.send([], remote, (e, v) => {
-    console.log("close the server");
-        localServer.close();
-        process.exit(1);
-  });   
-}
 function query_iteration_help(tries,list,total_res,cb){
+  console.log(list)
+  console.log(total_res)
   if (tries == list.length || total_res.size >= 4){
     // console.log("enters the callback of iteration");
     cb(null,total_res);
     return;
   }
   distribution.query.store.get(list[tries],(e,v)=>{
+    // console.log("query store get")
+    // console.log(v);
+    // console.log("above is the result from query store get")
     for (let i in v){
-      total_res.add(v[i]);
+      total_res.add(JSON.stringify(v[i]));
     }
     // console.log(e);
     tries++;
@@ -60,8 +56,10 @@ function query(processedQuery, cb) {
 }
   // Print the matching lines from the global index file
   // console.log(searchResults.trim());
-  function main(args, cb){
-    // const args = process.argv.slice(2); // Get command-line arguments
+  // words is all keys of this group
+  function main(args, words, cb){
+    // console.log("input is ", args);
+    // console.log("words is ", words);
     if (args.length < 1) {
       console.error('Usage: ./query.js [query_strings...]');
       cb(null);
@@ -70,12 +68,12 @@ function query(processedQuery, cb) {
       `echo "${args}" | ./non-distribution/c/process.sh | ./non-distribution/c/stem.js | tr "\r\n" "  "`,
       {encoding: 'utf-8'},
   ).trim();
+  // console.log("processed query is", processedQuery);
     query(processedQuery, (e,outSet, n_grams)=>{
+      // console.log(outSet);
       if (outSet.size < 4){
-        distribution.query.store.get(null, (e,v)=>{
           processedQuery = processedQuery.replace(/[^a-zA-Z0-9]/g, "_");
           // console.log(v);
-          let words = v;
           for(let n_gram of n_grams){
             n_gram = n_gram.replace(/[^a-zA-Z0-9]/g, "_");
             words = words.filter(word => word !== n_gram); //make sure I don't get what I have processed
@@ -87,14 +85,22 @@ function query(processedQuery, cb) {
               console.log("after spell check");
               const concatenatedSet = new Set([...outSet, ...spellSet]);
             //   console.log(concatenatedSet);
-              cb(e,concatenatedSet);
+              const resSet = new Set();
+              for (let item of concatenatedSet){
+                resSet.add(JSON.parse(item));
+              }
+            
+              cb(e,resSet);
             })
           }
-        })
       }else{
         console.log("direct output");
-        // console.log(outSet);
-        cb(e,outSet);  
+        const resSet = new Set();
+        for (let item of outSet){
+          resSet.add(JSON.parse(item));
+        }
+      
+        cb(e,resSet);  
       }
     });   
   }

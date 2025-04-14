@@ -39,6 +39,9 @@ function put(state, configuration, callback) {
   if (!key) {
     key = id.getID(state);
   } else {
+    if(typeof key !== "string"){
+      console.log(key)
+    }
     key = key.replace(/[^a-zA-Z0-9]/g, "_");
   }
   const filePath = path.join(finalPath, key);

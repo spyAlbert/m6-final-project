@@ -2,7 +2,7 @@
 
 
 // const fs = require('fs');
-const query = require('./query.js');
+const query = require('./distribution/engine/query.js');
 // const path = require('path');
 const distribution = require("./config.js");
 const id = distribution.util.id;
@@ -71,9 +71,12 @@ function close(){
               
               distribution.query.store.put(["a differen link 100"],"exist", (e,v)=>{
                 distribution.query.store.put(["https://cs.brown.edu/courses/csci1380/sandbox/1/level_1a/level_2g/index.html 3"],"apil exust multip", (e,v)=>{
-                  query(process.argv.slice(2),(e,v)=>{
-                    console.log(v);
-                    close();});
+                  distribution.query.store.get(null, (e,words)=>{
+                    query(process.argv.slice(2),words,(e,v)=>{
+                      console.log(v);
+                      close();});
+                  })
+
               });
               });
             })

@@ -23,15 +23,15 @@
   "license": "ISC",
   "dependencies": {
     "@brown-ds/distribution": "latest",
-    "sync-fetch": "^0.6.0-2",
-    "natural": "^6.10.4",
     "aspell": "^0.1.1",
     "dictionary-en": "^4.0.0",
     "didyoumean": "^1.2.2",
     "didyoumean2": "^7.0.4",
     "fuse.js": "^7.1.0",
+    "natural": "^6.10.4",
     "nspell": "^2.1.5",
     "spellchecker": "^3.7.1",
+    "sync-fetch": "^0.6.0-2",
     "yargs": "^17.7.2"
   },
   "report": {
