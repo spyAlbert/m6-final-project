@@ -38,8 +38,8 @@ mr.map = function (serviceName, keys, gid, out, memWay, callback) {
               global.distribution.local.store.del(
                 { key: key, gid: gid },
                 (e, v) => {
-                  if (out) {
-                    global.distribution.local.store.put(mapOutput.forStoring, {key: key, gid: out}, (e, v) => {
+                  if (out && mapOutput.forStoring) {
+                    global.distribution[out].store.put(mapOutput.forStoring, key, (e, v) => {
                       if (e) console.log(`failed to store ${key} for ${out}`, e);
                       handleResponse(e, v);
                     });
@@ -181,25 +181,22 @@ mr.reduce = function (serviceName, keys, gid, out, memWay, callback) {
           let valList = obj.val;
           if (e) return handleResponse(e, obj);
           global.distribution.local.routes.get(serviceName, (e, v) => {
-            reducer = v.reduce;
-            v = reducer(obj.key, valList);
-
-            result.push(v);
-            if (out) {
-              let newKey = Object.keys(v)[0];
-              global.distribution.local.store.put(v[newKey], {key: newKey, gid: out}, (e, v) => {
-                if (e) console.log(`failed to store ${newKey} for ${out}`, e);
-                global.distribution.local[memWay].del(
-                  { key: key, gid: gid },
-                  handleResponse,
-                );
-              });
-            } else {
-              global.distribution.local[memWay].del(
-                { key: key, gid: gid },
-                handleResponse,
-              );
-            }
+            const reducer = v.reduce;
+            const reducerOutput = reducer(obj.key, valList);
+            result.push(reducerOutput);
+            const res = reducerOutput.RESULT || reducerOutput;
+            global.distribution.local[memWay].del({ key: key, gid: gid }, (e, v) => {
+              if (out && (reducerOutput.CONVERGING === undefined || reducerOutput.CONVERGING)) {
+              // if (out) {
+                let newKey = Object.keys(res)[0];
+                global.distribution[out].store.put(res[newKey], newKey, (e, v) => {
+                  if (e) console.log(`failed to store ${newKey} for ${out}`, e)
+                  return handleResponse(e, v);
+                });
+              } else {
+                return handleResponse(e, v);
+              }
+            });
           });
         }
       );

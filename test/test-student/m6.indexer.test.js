@@ -1,7 +1,6 @@
 const distribution = require('../../config.js');
 const id = distribution.util.id;
 const indexGroup = {};
-const queryGroup = {};
 
 /*
     The local node will be the orchestrator.
@@ -14,7 +13,7 @@ const n3 = {ip: '127.0.0.1', port: 7112};
 
 jest.setTimeout(3600000);
 
-test("M6: basic index test", (done) => {
+test("M6: index test", (done) => {
   const indexer = require("../../distribution/engine/indexer.js");
 
   const pkgA = { package: "packageA", description: "single individual", pagerank: 10 };
@@ -53,14 +52,13 @@ test("M6: basic index test", (done) => {
       reduce: indexer.reduce,
       keys: ["packageA", "packageB", "packageC"],
     };
-    console.log("about to mapreduce?");
     distribution.index.mr.exec(mrIndexConfig, (e, v) => {
-      for (const item of expected) {
-        const key = Object.keys(item)[0];
-        console.log("NGRAM:", key);
-        console.log("EXPECTED:", item[key]);
-        console.log("ACTUAL:", v.find(i => Object.keys(i)[0] === key));
-      }
+      // for (const item of expected) {
+      //   const key = Object.keys(item)[0];
+      //   console.log("NGRAM:", key);
+      //   console.log("EXPECTED:", item[key]);
+      //   console.log("ACTUAL:", v.find(i => Object.keys(i)[0] === key));
+      // }
       try {
         expect(v).toEqual(expect.arrayContaining(expected));
         done();
@@ -95,10 +93,6 @@ beforeAll((done) => {
   indexGroup[id.getSID(n2)] = n2;
   indexGroup[id.getSID(n3)] = n3;
 
-  queryGroup[id.getSID(n1)] = n1;
-  queryGroup[id.getSID(n2)] = n2;
-  queryGroup[id.getSID(n3)] = n3;
-
   const startNodes = (cb) => {
     distribution.local.status.spawn(n1, (e, v) => {
       distribution.local.status.spawn(n2, (e, v) => {
@@ -116,12 +110,7 @@ beforeAll((done) => {
       const indexConfig = { gid: "index" };
       distribution.local.groups.put(indexConfig, indexGroup, (e, v) => {
         distribution.index.groups.put(indexConfig, indexGroup, (e, v) => {
-          const queryConfig = { gid: "query" };
-          distribution.local.groups.put(queryConfig, queryGroup, (e, v) => {
-            distribution.query.groups.put(queryConfig, queryGroup, (e, v) => {
-              done();
-            });
-          });
+          done();
         });
       });
     });

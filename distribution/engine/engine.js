@@ -2,24 +2,20 @@ const distribution = require('../../config.js');
 const id = distribution.util.id;
 const crawler = require("./crawler.js");
 const indexer = require("./indexer.js");
+const pageranker = require("./pageranker.js");
 
 /*
     The local node will be the orchestrator.
 */
 let localServer = null;
 
-const nodes = [];
-for (let i = 0; i < 10; i++) {
-  nodes.push({
-    ip: '127.0.0.1',
-    port: 7110 + i,
-  })
-}
+const { nodes } = require("./nodes.js");
 
 const groups = {
-  all: {},
+  crawl: {},
   index: {},
   query: {},
+  pagerank: {},
 };
 
 // Could potentially use this list of packages with the highest number of 
@@ -29,7 +25,7 @@ const rootPackages = [
   "express", 
   // packages with many dependencies (for stress testing)
   "khoom",
-  "toyako",
+  // "toyako",
   // "mhy",
   // "cncjs",
 ];
@@ -46,8 +42,7 @@ function startNodes(cb) {
 };
 
 function setupGroups(cb) {
-  // For now, put all nodes in all groups
-  nodes.push(global.nodeConfig);
+  // For now, the the local server node only orchestrates
   for (const node of nodes) {
     const sid = id.getSID(node);
     for (const group of Object.values(groups)) {
@@ -76,7 +71,7 @@ function setupCrawler(cb) {
     if (++numResponses === rootPackages.length) cb();
   }
   for (const pkgName of rootPackages) {
-    distribution.all.store.put("null", pkgName, (e, v) => handleResponse(pkgName, e, v));
+    distribution.crawl.store.put("null", pkgName, (e, v) => handleResponse(pkgName, e, v));
   }
 }
 
@@ -104,25 +99,36 @@ function runEngine() {
           const mrCrawlConfig = {
             map: crawler.map,
             reduce: crawler.reduce,
-            rounds: 4, // TODO: figure out best number of rounds or make mapreduce detect when its found all (or a sufficient amount) of packages
+            rounds: 2, // TODO: figure out best number of rounds or make mapreduce detect when its found all (or a sufficient amount) of packages
             keys: rootPackages,
-            mapOut: "index",
+            mapOut: "pagerank",
           };
-          distribution.all.mr.exec(mrCrawlConfig, (e, v) => {
-            // TODO: insert page rank calculations here
-            console.log("\n\n\n------STARTING INDEXING------\n\n\n");
-            distribution.index.store.get(null, (e, packageNames) => {
-              const mrIndexConfig = {
-                map: indexer.map,
-                reduce: indexer.reduce,
-                keys: packageNames,
-                reduceOut: "query",
-              }
-              distribution.index.mr.exec(mrIndexConfig, (e, v) => {
-                console.log("\n\n\n------SHUTTING DOWN NODES------\n\n\n");
-                cleanUpNodes();
+          distribution.crawl.mr.exec(mrCrawlConfig, (e, v) => {
+            console.log("\n\n\n------STARTING PAGERANKING------\n\n\n");
+            pageranker.sanitize((e, storedPackages) => {
+              mrPagerankConfig = {
+                map: pageranker.map,
+                reduce: pageranker.reduce,
+                rounds: 100,
+                keys: storedPackages,
+                reduceOut: "index",
+              };
+              distribution.pagerank.mr.exec(mrPagerankConfig, (e, v) => {
+                console.log("\n\n\n------STARTING INDEXING------\n\n\n");
+                distribution.index.store.get(null, (e, packageNames) => {
+                  const mrIndexConfig = {
+                    map: indexer.map,
+                    reduce: indexer.reduce,
+                    keys: packageNames,
+                    reduceOut: "query",
+                  };
+                  distribution.index.mr.exec(mrIndexConfig, (e, v) => {
+                    console.log("\n\n\n------FINISHED RUNNING ENGINE------\n\n\n");
+                    localServer.close();
+                  });
+                });
               });
-            });
+            })
           });
         });
       });

@@ -41,6 +41,10 @@ const store = require("./store");
 
 const mr = require("./mr");
 
+/* PageRank Service */
+
+const pagerank = require("./pagerank");
+
 module.exports = {
   status: status,
   routes: routes,
@@ -50,4 +54,5 @@ module.exports = {
   mem: mem,
   store: store,
   mr: mr,
+  pagerank: pagerank,
 };
