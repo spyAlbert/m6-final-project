@@ -53,6 +53,7 @@ function mr(config) {
     const mapOut = configuration.mapOut;
     const reduceOut = configuration.reduceOut;
     let rounds = configuration.rounds;
+    if (rounds) console.log(`MAP REDUCE: ${rounds} ROUNDS LEFT`);
     currId++;
     const serviceName = "mr-" + currId;
     global.distribution.local.groups.get(context.gid, (e, v) => {
@@ -99,15 +100,17 @@ function mr(config) {
                       }
                       //flat
                       resultList = resultList.flat();
+                      const converged = resultList.reduce((acc, res) => acc && !!res.CONVERGING, true);
+                      resultList = resultList.map(res => res.RESULT || res);
                       // deregister
                       global.distribution[context.gid].routes.rem(
                         serviceName,
                         (e, v) => {
-                          if (!rounds) {
+                          if (!rounds || resultList.length === 0 || converged) {
                             return cb(null, resultList);
                           } else {
                             rounds--;
-                            if (rounds === 0 || resultList.length === 0) {
+                            if (rounds === 0) {
                               return cb(null, resultList);
                             } else {
                               //next round

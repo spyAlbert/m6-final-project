@@ -27,24 +27,20 @@ indexer.map = function (packageName, packageData) {
 
   // 2) combine words into n-grams
   const maxNGramSize = 3;
-  const nGrams = [packageName]; // include packageName
+  const nGrams = new Set([packageName]); // include packageName
   for (let i = 0; i < words.length; i++) {
     let nGram = [];
     for (let offset = 0; (offset < maxNGramSize) && (i + offset < words.length); offset++) {
       nGram.push(words[i + offset]);
-      nGrams.push(nGram.sort().join(" "));
+      nGrams.add(nGram.sort().join(" "));
       nGram = [...nGram];
     }
   }
 
-  // 3) Sum the counts of all n-grams
+  // 3) Construct output based on the inverted index
   const output = [];
-  const nGramToCount = {};
   for (const nGram of nGrams) {
-    nGramToCount[nGram] = (nGramToCount[nGram] || 0) + 1;
-  }
-  for (const [nGram, count] of Object.entries(nGramToCount)) {
-    output.push({[nGram]: {package: packageName, count: count}});
+    output.push({[nGram]: {package: packageName, description: description, pagerank: packageData.pagerank}});
   }
   return output;
 }
@@ -52,7 +48,7 @@ indexer.map = function (packageName, packageData) {
 indexer.reduce = function (nGram, results) {
   console.log(`index reducer: ${nGram}`);
   const output = {};
-  output[nGram] = results.sort((a, b) => b.count - a.count);
+  output[nGram] = results.sort((a, b) => b.pagerank - a.pagerank);
   return output;
 }
 

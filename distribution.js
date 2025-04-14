@@ -9,6 +9,7 @@ global.fetch = require("sync-fetch");
 
 // imports used by indexer (though they really slow down node creation, 
 // perhaps there's a better way to do it)
+// TODO: make downloading stopwords optional so some nodes (like a node for senting queries?) can start up faster
 const natural = require('natural');
 global.stemmer = natural.PorterStemmer;
 const fs = require('fs');

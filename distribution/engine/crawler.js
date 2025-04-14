@@ -42,12 +42,12 @@ crawler.reduce = (key, values) => {
   const parentID = distribution.util.id.getID(parentPkg);
   values = values.flat();
 
-  const depsKey = `${parentID}+deps`;
-  const depsInfo = { pkg: parentPkg, deps: values };
+  // const depsKey = `${parentID}+deps`;
+  // const depsInfo = { pkg: parentPkg, deps: values };
 
-  distribution.all.store.put(depsInfo, depsKey, (e, _v) => {
-    if (e) return null;
-  });
+  // distribution.all.store.put(depsInfo, depsKey, (e, _v) => {
+  //   if (e) return null;
+  // });
 
   // Format for next iteration
   const out = [];
