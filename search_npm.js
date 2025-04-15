@@ -89,6 +89,7 @@ function startNodes(cb) {
         console.log("Enter q to quit | Enter h for help");
         // get all keys
         distribution.query.store.get(null, (e, words) => {
+          console.log(words);
           repl.start({
               prompt: 'ngram> ',
               eval: (cmd, context, filename, callback) => {
