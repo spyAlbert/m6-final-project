@@ -106,14 +106,6 @@ beforeAll((done) => {
       distribution.local.status.spawn(n2, (e, v) => {
         distribution.local.status.spawn(n3, (e, v) => {
           distribution.local.status.spawn(n4, (e, v) => {
-            distribution.local.status.spawn(n5, (e, v) => {
-              cb();
-            });
-          });
-        });
-      });
-    });
-  };
 
   distribution.node.start((server) => {
     localServer = server;
@@ -131,17 +123,15 @@ beforeAll((done) => {
 
 afterAll((done) => {
   const remote = {service: 'status', method: 'stop'};
-  const nodes = [n1, n2, n3, n4, n5];
-  const stopNodes = (index) => {
-    if (index >= nodes.length) {
-      localServer.close();
-      done();
-      return;
-    }
-    remote.node = nodes[index];
+  remote.node = n1;
+  distribution.local.comm.send([], remote, (e, v) => {
+    remote.node = n2;
     distribution.local.comm.send([], remote, (e, v) => {
-      stopNodes(index + 1);
+      remote.node = n3;
+      distribution.local.comm.send([], remote, (e, v) => {
+        localServer.close();
+        done();
+      });
     });
-  };
-  stopNodes(0);
+  });
 });

@@ -113,14 +113,6 @@ beforeAll((done) => {
         });
       });
     });
-  };
-
-  distribution.node.start((server) => {
-    localServer = server;
-
-    startNodes(() => {
-      const indexConfig = { gid: "index" };
-      distribution.local.groups.put(indexConfig, indexGroup, (e, v) => {
         distribution.index.groups.put(indexConfig, indexGroup, (e, v) => {
           done();
         });
@@ -131,17 +123,15 @@ beforeAll((done) => {
 
 afterAll((done) => {
   const remote = {service: 'status', method: 'stop'};
-  const nodes = [n1, n2, n3, n4, n5];
-  const stopNodes = (index) => {
-    if (index >= nodes.length) {
-      localServer.close();
-      done();
-      return;
-    }
-    remote.node = nodes[index];
+  remote.node = n1;
+  distribution.local.comm.send([], remote, (e, v) => {
+    remote.node = n2;
     distribution.local.comm.send([], remote, (e, v) => {
-      stopNodes(index + 1);
+      remote.node = n3;
+      distribution.local.comm.send([], remote, (e, v) => {
+        localServer.close();
+        done();
+      });
     });
-  };
-  stopNodes(0);
+  });
 });

@@ -10,8 +10,6 @@ let localServer = null;
 const n1 = {ip: '127.0.0.1', port: 7110};
 const n2 = {ip: '127.0.0.1', port: 7111};
 const n3 = {ip: '127.0.0.1', port: 7112};
-const n4 = {ip: '127.0.0.1', port: 7113};
-const n5 = {ip: '127.0.0.1', port: 7114};
 
 jest.setTimeout(3600000);
 
@@ -22,12 +20,11 @@ test("M6: index test", (done) => {
   const pkgB = { package: "packageB", description: "document scenario single", pagerank:  5};
   const pkgC = { package: "packageC", description: "single document scenario document scenario distributed", pagerank: 1 };
 
-  const baseDataset = [
+  const dataset = [
     { "packageA": pkgA},
     { "packageB": pkgB },
     { "packageC": pkgC },
   ];
-  const dataset = Array(100).fill(baseDataset).flat();
 
   const expected = [
     { packageA: [pkgA] }, 
@@ -50,21 +47,18 @@ test("M6: index test", (done) => {
   ];
 
   const doMapReduce = (cb) => {
-    const startTime = Date.now();
     const mrIndexConfig = {
       map: indexer.map,
       reduce: indexer.reduce,
       keys: ["packageA", "packageB", "packageC"],
     };
     distribution.index.mr.exec(mrIndexConfig, (e, v) => {
-      const endTime = Date.now();
-      const latency = endTime - startTime;
-      const throughput = (dataset.length * 1000) / latency;
-      
-      console.log(`Performance Metrics:`);
-      console.log(`- Latency: ${latency}ms`);
-      console.log(`- Throughput: ${throughput.toFixed(2)} operations/second`);
-      
+      // for (const item of expected) {
+      //   const key = Object.keys(item)[0];
+      //   console.log("NGRAM:", key);
+      //   console.log("EXPECTED:", item[key]);
+      //   console.log("ACTUAL:", v.find(i => Object.keys(i)[0] === key));
+      // }
       try {
         expect(v).toEqual(expect.arrayContaining(expected));
         done();
@@ -98,18 +92,12 @@ beforeAll((done) => {
   indexGroup[id.getSID(n1)] = n1;
   indexGroup[id.getSID(n2)] = n2;
   indexGroup[id.getSID(n3)] = n3;
-  indexGroup[id.getSID(n4)] = n4;
-  indexGroup[id.getSID(n5)] = n5;
 
   const startNodes = (cb) => {
     distribution.local.status.spawn(n1, (e, v) => {
       distribution.local.status.spawn(n2, (e, v) => {
         distribution.local.status.spawn(n3, (e, v) => {
-          distribution.local.status.spawn(n4, (e, v) => {
-            distribution.local.status.spawn(n5, (e, v) => {
-              cb();
-            });
-          });
+          cb();
         });
       });
     });
@@ -131,17 +119,15 @@ beforeAll((done) => {
 
 afterAll((done) => {
   const remote = {service: 'status', method: 'stop'};
-  const nodes = [n1, n2, n3, n4, n5];
-  const stopNodes = (index) => {
-    if (index >= nodes.length) {
-      localServer.close();
-      done();
-      return;
-    }
-    remote.node = nodes[index];
+  remote.node = n1;
+  distribution.local.comm.send([], remote, (e, v) => {
+    remote.node = n2;
     distribution.local.comm.send([], remote, (e, v) => {
-      stopNodes(index + 1);
+      remote.node = n3;
+      distribution.local.comm.send([], remote, (e, v) => {
+        localServer.close();
+        done();
+      });
     });
-  };
-  stopNodes(0);
+  });
 });

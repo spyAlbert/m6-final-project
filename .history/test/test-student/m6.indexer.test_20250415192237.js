@@ -10,8 +10,6 @@ let localServer = null;
 const n1 = {ip: '127.0.0.1', port: 7110};
 const n2 = {ip: '127.0.0.1', port: 7111};
 const n3 = {ip: '127.0.0.1', port: 7112};
-const n4 = {ip: '127.0.0.1', port: 7113};
-const n5 = {ip: '127.0.0.1', port: 7114};
 
 jest.setTimeout(3600000);
 
@@ -98,18 +96,12 @@ beforeAll((done) => {
   indexGroup[id.getSID(n1)] = n1;
   indexGroup[id.getSID(n2)] = n2;
   indexGroup[id.getSID(n3)] = n3;
-  indexGroup[id.getSID(n4)] = n4;
-  indexGroup[id.getSID(n5)] = n5;
 
   const startNodes = (cb) => {
     distribution.local.status.spawn(n1, (e, v) => {
       distribution.local.status.spawn(n2, (e, v) => {
         distribution.local.status.spawn(n3, (e, v) => {
-          distribution.local.status.spawn(n4, (e, v) => {
-            distribution.local.status.spawn(n5, (e, v) => {
-              cb();
-            });
-          });
+          cb();
         });
       });
     });
@@ -131,17 +123,15 @@ beforeAll((done) => {
 
 afterAll((done) => {
   const remote = {service: 'status', method: 'stop'};
-  const nodes = [n1, n2, n3, n4, n5];
-  const stopNodes = (index) => {
-    if (index >= nodes.length) {
-      localServer.close();
-      done();
-      return;
-    }
-    remote.node = nodes[index];
+  remote.node = n1;
+  distribution.local.comm.send([], remote, (e, v) => {
+    remote.node = n2;
     distribution.local.comm.send([], remote, (e, v) => {
-      stopNodes(index + 1);
+      remote.node = n3;
+      distribution.local.comm.send([], remote, (e, v) => {
+        localServer.close();
+        done();
+      });
     });
-  };
-  stopNodes(0);
+  });
 });
