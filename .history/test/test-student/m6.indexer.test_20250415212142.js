@@ -1,4 +1,3 @@
-const { performance } = require('perf_hooks');
 const distribution = require('../../config.js');
 const id = distribution.util.id;
 const indexGroup = {};
@@ -15,43 +14,36 @@ jest.setTimeout(3600000);
 test("M6: index test", (done) => {
   const indexer = require("../../distribution/engine/indexer.js");
 
-  // Generate 1000 unique data points with varied descriptions
-  const dataset = Array.from({length: 1000}, (_, i) => {
-    const randomText = [
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      "Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae;",
-      "Nullam euismod, nisl eget aliquam ultricies, nunc nisl aliquet nunc, quis aliquam nisl nunc eu nisl.",
-      "Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.",
-      "Cras mattis consectetur purus sit amet fermentum.",
-      "Donec sed odio dui. Donec ullamcorper nulla non metus auctor fringilla.",
-      "Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum.",
-      "Etiam porta sem malesuada magna mollis euismod.",
-      "Maecenas sed diam eget risus varius blandit sit amet non magna.",
-      "Nullam quis risus eget urna mollis ornare vel eu leo."
-    ];
-    
-    const randomWords = [
-      "foo", "bar", "baz", "qux", "quux", "corge", "grault", "garply", 
-      "waldo", "fred", "plugh", "xyzzy", "thud", "wibble", "wobble", "wubble"
-    ];
-    
-    const description = 
-      randomText[i % randomText.length] + " " +
-      Array.from({length: 5}, () => randomWords[Math.floor(Math.random() * randomWords.length)]).join(" ") + " " +
-      `Additional info ${i}`;
+  const pkgA = { package: "packageA", description: "single individual", pagerank: 10 };
+  const pkgB = { package: "packageB", description: "document scenario single", pagerank:  5};
+  const pkgC = { package: "packageC", description: "single document scenario document scenario distributed", pagerank: 1 };
 
-    return { 
-      [`package${i}`]: {
-        package: `package${i}`,
-        description: description,
-        pagerank: i % 10 + 1
-      }
-    };
-  });
+  const baseDataset = [
+    { "packageA": pkgA},
+    { "packageB": pkgB },
+    { "packageC": pkgC },
+  ];
+  const dataset = Array(100).fill(baseDataset).flat();
 
-  // Performance thresholds (in ms)
-  const MAX_LATENCY = 5000;
-  const MIN_THROUGHPUT = 200; // ops/sec
+  const expected = [
+    { packageA: [pkgA] }, 
+    { packageB: [pkgB] }, 
+    { packageC: [pkgC] }, 
+    { individu: [pkgA]},
+    { singl: [pkgA, pkgB, pkgC] }, 
+    { document: [pkgB, pkgC] }, 
+    { scenario: [pkgB, pkgC] }, 
+    { distribut: [pkgC] }, 
+    { "individu singl": [pkgA] },
+    { "document scenario": [pkgB, pkgC] },
+    { "scenario singl": [pkgB] },
+    { "document singl": [pkgC] },
+    { "distribut scenario": [pkgC] },
+    { "document scenario singl": [pkgB, pkgC] },
+    { "document document scenario": [pkgC] },
+    { "document scenario scenario": [pkgC] },
+    { "distribut document scenario": [pkgC] },
+  ];
 
   const doMapReduce = (cb) => {
     const startTime = performance.now();
@@ -70,9 +62,7 @@ test("M6: index test", (done) => {
       console.log(`- Throughput: ${throughput.toFixed(2)} operations/second`);
       
       try {
-        // Verify performance metrics
-        expect(latency).toBeLessThan(MAX_LATENCY);
-        expect(throughput).toBeGreaterThan(MIN_THROUGHPUT);
+        expect(v).toEqual(expect.arrayContaining(expected));
         done();
       } catch (e) {
         done(e);
