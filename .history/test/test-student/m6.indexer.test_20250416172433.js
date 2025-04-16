@@ -50,7 +50,7 @@ test("M6: index test", (done) => {
   });
 
   const MAX_LATENCY_PER_OP = 5;
-  const MIN_THROUGHPUT = 200; 
+  const MIN_THROUGHPUT = 200; // ops/sec
 
   const doMapReduce = (cb) => {
     const startTime = performance.now();
