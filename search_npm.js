@@ -81,6 +81,7 @@ function startNodes(cb) {
     }
   }
   distribution.node.start((server) => {
+    let spellcheck = true;
     localServer = server;
     // start the nodes
     startNodes(() => {
@@ -89,7 +90,7 @@ function startNodes(cb) {
         console.log("Enter q to quit | Enter h for help");
         // get all keys
         distribution.query.store.get(null, (e, words) => {
-          console.log(words);
+          // console.log(words);
           repl.start({
               prompt: 'ngram> ',
               eval: (cmd, context, filename, callback) => {
@@ -101,6 +102,7 @@ function startNodes(cb) {
               ------------------
               h          - Show this help message
               q          - Exit the program
+              s          - Turn on/off the spellcheck
               <search term> - Search for packages matching the term
 
               Examples:
@@ -115,6 +117,16 @@ function startNodes(cb) {
                     callback(null);
                     return
                   } 
+                  if (input === "s"){
+                    
+                    spellcheck = !spellcheck;
+                    let switchText = "spell check off";
+                    if (spellcheck){
+                      switchText = "spell check on";
+                    }
+                    callback(null,switchText);
+                    return
+                  } 
                   if (input === 'q') {
                       console.log('Exiting...');
                       cleanUpNodes();
@@ -123,7 +135,7 @@ function startNodes(cb) {
                       const args = input.split(/\s+/);
                       console.log("inputs received:", args);
                       
-                      query(args, words, (error, results) => {
+                      query(args, words, spellcheck, (error, results) => {
                           if (error) {
                               callback(error);
                               return;

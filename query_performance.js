@@ -189,12 +189,13 @@ function latency_helper(tries, args, words, cb){
       return;
   }
   const input = args[tries].split(/\s+/);
-  query(input, words, (e,v)=>{
+  query(input, words, true, (e,v)=>{
       latency_helper(tries, args, words, cb);
   })
 }
 
   distribution.node.start((server) => {
+    // let totalSpellCheckTime = 0;
     try {
       // start the nodes
     localServer = server;
@@ -208,12 +209,14 @@ function latency_helper(tries, args, words, cb){
           let count = 0;
           for (let i = 0; i < n_grams.length; i++){
             const args = n_grams[i].split(/\s+/);
-            query(args, words, (error, results) => {
+            query(args, words, true, (error, results) => {
+              // totalSpellCheckTime += spellchecktime/1000;
               count++;
               if (count == n_grams.length){
                 const endTime = performance.now();
                 const totalTime = (endTime-startTime)/1000
                 console.log(`Time elapsed is ${totalTime}s  Number of query is ${n_grams.length}  total throughput is ${n_grams.length/totalTime}`)
+                // console.log(`For spellcheck, Time elapsed is ${totalSpellCheckTime}s  Number of query is ${n_grams.length}  ${totalSpellCheckTime/n_grams.length} second per query`);
                 const startTime2 = performance.now();
                 // start the latency
                 latency_helper(0,n_grams,words,(e,v)=>{
@@ -222,7 +225,7 @@ function latency_helper(tries, args, words, cb){
                   const totalTime2 = endTime2-startTime2;
                   console.log('query latency');
                   console.log(`Total Time is ${totalTime2/1000} second`);
-                  console.log(`latency of comm.send is ${totalTime2/1000/n_grams.length} second per query`);
+                  console.log(`latency of query is ${totalTime2/1000/n_grams.length} second per query`);
                   cleanUpNodes();
                   }
                   catch{

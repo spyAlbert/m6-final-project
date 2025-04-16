@@ -1,0 +1,8 @@
+Query:
+1 node: throughput 3.93650545456999 query per second | latency 0.24834083518000008 second per query
+3 node: throughput 3.1742379355001367 query per second | latency 0.32885297367999994 second per query
+5 node: throughput 3.889173371982051 query per second | latency 0.26066701958000005 second per query
+7 node: throughput 3.192989107734928 query per second | latency 0.31664055126999996 second per query
+10 node: throughput 2.6787740335316226 query per second | latency 0.3901985069199999 second per query
+20 node: throughput 2.055559550915821 query per second | latency 0.44547649980000004 second per query
+

@@ -209,6 +209,7 @@ beforeAll((done) => {
 
 afterAll((done) => {
   const remote = {service: 'status', method: 'stop'};
+  const nodes = require("../../distribution/engine/nodes.js");
   const stopNodes = (index) => {
     if (index >= nodes.length) {
       localServer.close();

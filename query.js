@@ -65,7 +65,7 @@ function query(processedQuery, cb) {
   // Print the matching lines from the global index file
   // console.log(searchResults.trim());
   // words is all keys of this group
-  function main(args, words, cb){
+  function main(args, words, spellcheck, cb){
     // console.log("input is ", args);
     // console.log("words is ", words);
     if (args.length < 1) {
@@ -82,7 +82,8 @@ function query(processedQuery, cb) {
   // console.log("processed query is", processedQuery);
     query(processedQuery, (e,outSet, n_grams)=>{
       // console.log(outSet);
-      if (outSet.size < 4){
+      // if the size is too small, and spellcheck is on
+      if (outSet.size < 4 && spellcheck){
           processedQuery = processedQuery.replace(/[^a-zA-Z0-9]/g, "_");
           // console.log(v);
           for(let n_gram of n_grams){
@@ -92,9 +93,11 @@ function query(processedQuery, cb) {
           }
           // const closest = didYouMean(processedQuery, words);
           // const closest = didYouMean(processedQuery, words);
+          // const startTime = performance.now();
           const closests = didYouMean(processedQuery, words,   {
             returnType: ReturnTypeEnums.ALL_CLOSEST_MATCHES
           });
+          // const totalTime = performance.now()-startTime;
           // console.log(closests);
           let count = 0;
           let resSet = new Set();
@@ -111,6 +114,7 @@ function query(processedQuery, cb) {
                 resSet.add(JSON.parse(item));
               }
               if (count == closests.length){
+                // cb(e,[...resSet],totalTime);  
                 cb(e,[...resSet]);  
               }
             })
@@ -131,8 +135,8 @@ function query(processedQuery, cb) {
         for (let item of outSet){
           resSet.add(JSON.parse(item));
         }
-        
-        cb(e,[...resSet]);  
+        // cb(e,[...resSet], 0);  
+        cb(e,[...resSet]);
       }
     });   
   }
