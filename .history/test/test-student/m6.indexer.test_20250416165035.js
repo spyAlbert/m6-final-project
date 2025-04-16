@@ -16,7 +16,7 @@ test("M6: index test", (done) => {
   const indexer = require("../../distribution/engine/indexer.js");
 
   // Generate 1000 unique data points with varied descriptions
-  const dataset = Array.from({length: 100000}, (_, i) => {
+  const dataset = Array.from({length: 1000000}, (_, i) => {
     const randomText = [
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
       "Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae;",
@@ -40,7 +40,7 @@ test("M6: index test", (done) => {
       Array.from({length: 5}, () => randomWords[Math.floor(Math.random() * randomWords.length)]).join(" ") + " " +
       `Additional info ${i}`;
 
-    const key = `package${i % 1000}`;  // Only 10 unique keys (0-9)
+    const key = `package${i % 100}`;  // Only 10 unique keys (0-9)
     return { 
       [key]: {
         package: key,

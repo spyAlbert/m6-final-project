@@ -40,7 +40,7 @@ test("M6: index test", (done) => {
       Array.from({length: 5}, () => randomWords[Math.floor(Math.random() * randomWords.length)]).join(" ") + " " +
       `Additional info ${i}`;
 
-    const key = `package${i % 1000}`;  // Only 10 unique keys (0-9)
+    const key = `package${i % 100}`;  // Only 10 unique keys (0-9)
     return { 
       [key]: {
         package: key,

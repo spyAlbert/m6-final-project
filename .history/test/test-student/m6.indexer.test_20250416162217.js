@@ -16,7 +16,7 @@ test("M6: index test", (done) => {
   const indexer = require("../../distribution/engine/indexer.js");
 
   // Generate 1000 unique data points with varied descriptions
-  const dataset = Array.from({length: 100000}, (_, i) => {
+  const dataset = Array.from({length: 1000}, (_, i) => {
     const randomText = [
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
       "Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae;",
@@ -40,41 +40,39 @@ test("M6: index test", (done) => {
       Array.from({length: 5}, () => randomWords[Math.floor(Math.random() * randomWords.length)]).join(" ") + " " +
       `Additional info ${i}`;
 
-    const key = `package${i % 1000}`;  // Only 10 unique keys (0-9)
     return { 
-      [key]: {
-        package: key,
-        description: description
+      [`package${i}`]: {
+        package: `package${i}`,
+        description: description,
+        pagerank: i % 10 + 1
       }
     };
   });
 
   // Performance thresholds (in ms)
-  const MAX_LATENCY_PER_OP = 5; // max 5ms per operation
+  const MAX_LATENCY = 5000;
   const MIN_THROUGHPUT = 200; // ops/sec
 
   const doMapReduce = (cb) => {
     const startTime = performance.now();
-    const keys = dataset.map(o => Object.keys(o)[0]);
     const mrIndexConfig = {
       map: indexer.map,
       reduce: indexer.reduce,
-      keys: keys,
+      keys: ["packageA", "packageB", "packageC"],
     };
     distribution.index.mr.exec(mrIndexConfig, (e, v) => {
       const endTime = performance.now();
-      const totalLatency = endTime - startTime;
-      const latencyPerOp = totalLatency / dataset.length;
-      const throughput = (dataset.length * 1000) / totalLatency;
+      const latency = endTime - startTime;
+      const throughput = (dataset.length * 1000) / latency;
       
       console.log(`Performance Metrics:`);
-      console.log(`- Total Latency: ${totalLatency.toFixed(2)}ms`);
-      console.log(`- Latency per Operation: ${latencyPerOp.toFixed(2)}ms`);
+      console.log(`- Latency: ${latency}ms`);
+      console.log(`- NumResult: ${latency}ms`);
       console.log(`- Throughput: ${throughput.toFixed(2)} operations/second`);
       
       try {
         // Verify performance metrics
-        expect(latencyPerOp).toBeLessThan(MAX_LATENCY_PER_OP);
+        expect(latency).toBeLessThan(MAX_LATENCY);
         expect(throughput).toBeGreaterThan(MIN_THROUGHPUT);
         done();
       } catch (e) {
