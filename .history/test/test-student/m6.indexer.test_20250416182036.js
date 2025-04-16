@@ -101,7 +101,7 @@ test("M6: index test", (done) => {
     "maintenance tools"
   ];
 
-  const dataset = Array.from({length: 2000}, (_, i) => {
+  const dataset = Array.from({length: 5000}, (_, i) => {
     const description = 
       // Use 3 common phrases with different offsets for better distribution
       commonPhrases[i % commonPhrases.length] + " " +
@@ -122,8 +122,8 @@ test("M6: index test", (done) => {
     };
   });
 
-  const MAX_LATENCY_PER_OP = 100;
-  const MIN_THROUGHPUT = 20; 
+  const MAX_LATENCY_PER_OP = 10;
+  const MIN_THROUGHPUT = 200; 
 
   const doMapReduce = (cb) => {
     const startTime = performance.now();

@@ -15,101 +15,20 @@ jest.setTimeout(3600000);
 test("M6: index test", (done) => {
   const indexer = require("../../distribution/engine/indexer.js");
 
-  // Generate test data with extensive n-grams
+  // Generate test data with repeatable n-grams
   const commonPhrases = [
-    // System related
     "distributed system processing",
-    "cloud computing platform",
     "data management framework",
+    "scalable cloud computing",
     "real time analytics",
-    "high performance computing",
-    // Architecture related
-    "microservice architecture",
-    "scalable infrastructure",
-    "fault tolerant design",
-    "load balancing system",
-    "service mesh implementation",
-    // Data related
-    "big data processing",
-    "stream processing engine",
-    "data pipeline framework",
-    "database optimization",
-    "cache management system",
-    // Performance related
-    "performance monitoring tools",
-    "resource allocation system",
-    "throughput optimization",
-    "latency reduction framework",
-    "concurrent processing engine"
+    "high performance database"
   ];
 
-  const uniquePhrases = [
-    // Feature descriptions
-    "custom implementation details",
-    "specific feature set",
-    "unique approach method",
-    "novel solution design",
-    "innovative architecture",
-    "specialized components",
-    "advanced algorithms",
-    "optimized protocols",
-    "enhanced security",
-    "improved reliability",
-    // Technical characteristics
-    "async processing",
-    "event driven",
-    "message queue",
-    "load balanced",
-    "fault tolerant",
-    "highly available",
-    "horizontally scaled",
-    "vertically scaled",
-    "containerized deployment",
-    "serverless architecture",
-    // Integration capabilities
-    "third party integration",
-    "api gateway",
-    "service discovery",
-    "circuit breaker",
-    "rate limiting",
-    "data validation",
-    "error handling",
-    "logging system",
-    "monitoring tools",
-    "alerting mechanism",
-    // Development features
-    "test coverage",
-    "continuous integration",
-    "automated deployment",
-    "version control",
-    "documentation system",
-    "code quality",
-    "dependency management",
-    "build automation",
-    "release management",
-    "configuration system",
-    // Business functions
-    "business logic",
-    "workflow automation",
-    "report generation",
-    "data analytics",
-    "user management",
-    "access control",
-    "audit logging",
-    "backup system",
-    "recovery mechanism",
-    "maintenance tools"
-  ];
-
-  const dataset = Array.from({length: 2000}, (_, i) => {
+  const dataset = Array.from({length: 1000}, (_, i) => {
+    // Use repeating phrases to ensure n-gram overlap
     const description = 
-      // Use 3 common phrases with different offsets for better distribution
       commonPhrases[i % commonPhrases.length] + " " +
-      commonPhrases[(i + 7) % commonPhrases.length] + " " +
-      commonPhrases[(i + 13) % commonPhrases.length] + " " +
-      // Add 2 random unique phrases
-      uniquePhrases[Math.floor(Math.random() * uniquePhrases.length)] + " " +
-      uniquePhrases[Math.floor(Math.random() * uniquePhrases.length)] + " " +
+      commonPhrases[(i + 1) % commonPhrases.length] + " " +
       `version ${i}`;  // Add unique identifier
 
     const packageName = `package${i}`;
@@ -122,8 +41,8 @@ test("M6: index test", (done) => {
     };
   });
 
-  const MAX_LATENCY_PER_OP = 100;
-  const MIN_THROUGHPUT = 20; 
+  const MAX_LATENCY_PER_OP = 5;
+  const MIN_THROUGHPUT = 200; 
 
   const doMapReduce = (cb) => {
     const startTime = performance.now();

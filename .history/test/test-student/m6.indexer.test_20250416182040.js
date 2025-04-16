@@ -101,7 +101,7 @@ test("M6: index test", (done) => {
     "maintenance tools"
   ];
 
-  const dataset = Array.from({length: 2000}, (_, i) => {
+  const dataset = Array.from({length: 5000}, (_, i) => {
     const description = 
       // Use 3 common phrases with different offsets for better distribution
       commonPhrases[i % commonPhrases.length] + " " +
