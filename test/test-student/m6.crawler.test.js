@@ -16,56 +16,67 @@ let localServer = null;
 const n1 = { ip: "127.0.0.1", port: 7110 };
 const n2 = { ip: "127.0.0.1", port: 7111 };
 const n3 = { ip: "127.0.0.1", port: 7112 };
+const { nodes } = require("../../distribution/engine/nodes.js");
 jest.setTimeout(3600000);
 test("(1 pts) student test", (done) => {
   // test example word count
   const crawler = require("../../distribution/engine/crawler");
   const mapper = crawler.map;
   const reducer = crawler.reduce;
-  console.log(mapper);
 
   const dataset = [{ express: "null" }];
 
   const expected = [
-    { "side-channel": "qs" },
-    { debug: "send" },
-    { encodeurl: "send" },
-    { "escape-html": "send" },
-    { etag: "send" },
-    { fresh: "send" },
-    { "http-errors": "send" },
-    { "mime-types": "send" },
-    { ms: "send" },
-    { "on-finished": "send" },
-    { "range-parser": "send" },
-    { statuses: "send" },
-    { debug: "finalhandler" },
-    { parseurl: "finalhandler" },
-    { statuses: "finalhandler" },
-    { encodeurl: "finalhandler" },
-    { "escape-html": "finalhandler" },
-    { "on-finished": "finalhandler" },
-    { ms: "debug" },
-    { "mime-types": "accepts" },
-    { negotiator: "accepts" },
-    { wrappy: "once" },
-    { debug: "router" },
-    { depd: "router" },
-    { "is-promise": "router" },
-    { parseurl: "router" },
-    { "path-to-regexp": "router" },
+    { qs: "express" },
+    { etag: "express" },
+    { once: "express" },
+    { send: "express" },
+    { vary: "express" },
+    { debug: "express" },
+    { fresh: "express" },
+    { cookie: "express" },
+    { router: "express" },
+    { accepts: "express" },
+    { "type-is": "express" },
+    { parseurl: "express" },
+    { statuses: "express" },
+    { encodeurl: "express" },
+    { "mime-types": "express" },
+    { "proxy-addr": "express" },
+    { "body-parser": "express" },
+    { "escape-html": "express" },
+    { "http-errors": "express" },
+    { "on-finished": "express" },
+    { "content-type": "express" },
+    { finalhandler: "express" },
+    { "range-parser": "express" },
+    { "serve-static": "express" },
+    { "cookie-signature": "express" },
+    { "merge-descriptors": "express" },
+    { "content-disposition": "express" },
   ];
+  const numRecords = expected.length;
 
   const doMapReduce = (cb) => {
+    const startTime = performance.now();
     distribution.ncdc.mr.exec(
       {
         keys: getDatasetKeys(dataset),
         map: mapper,
         reduce: reducer,
-        rounds: 2,
+        rounds: 1,
       },
       (e, v) => {
         try {
+          const endTime = performance.now();
+          const timeInSeconds = (endTime - startTime) / 1000;
+          const throughput = numRecords / timeInSeconds;
+          const latency = endTime - startTime;
+          const perResultLatency = latency / numRecords;
+          console.log(numRecords);
+
+          console.log(`Throughput: ${throughput.toFixed(2)} records/second`);
+          console.log(`Latency per result: ${perResultLatency.toFixed(2)} ms`);
           expect(v).toEqual(expect.arrayContaining(expected));
           done();
         } catch (e) {
@@ -100,18 +111,19 @@ function getDatasetKeys(dataset) {
 }
 
 beforeAll((done) => {
-  ncdcGroup[id.getSID(n1)] = n1;
-  ncdcGroup[id.getSID(n2)] = n2;
-  ncdcGroup[id.getSID(n3)] = n3;
-
+  for (const node of nodes) {
+    const sid = id.getSID(node);
+    ncdcGroup[sid] = node;
+  }
   const startNodes = (cb) => {
-    distribution.local.status.spawn(n1, (e, v) => {
-      distribution.local.status.spawn(n2, (e, v) => {
-        distribution.local.status.spawn(n3, (e, v) => {
-          cb();
-        });
-      });
-    });
+    let numResponses = 0;
+    function onSpawn(node, e, v) {
+      if (e) console.log("error spawning node", node, e);
+      if (++numResponses === nodes.length) cb();
+    }
+    for (const node of nodes) {
+      distribution.local.status.spawn(node, (e, v) => onSpawn(node, e, v));
+    }
   };
 
   distribution.node.start((server) => {
@@ -128,17 +140,26 @@ beforeAll((done) => {
   });
 });
 
-afterAll((done) => {
+function cleanUpNodes(cb) {
+  let numResponses = 0;
+  function onStop(node, e, v) {
+    if (e) console.log("error stopping node", node, e);
+    if (++numResponses === nodes.length) localServer.close();
+  }
   const remote = { service: "status", method: "stop" };
-  remote.node = n1;
-  distribution.local.comm.send([], remote, (e, v) => {
-    remote.node = n2;
-    distribution.local.comm.send([], remote, (e, v) => {
-      remote.node = n3;
-      distribution.local.comm.send([], remote, (e, v) => {
-        localServer.close();
-        done();
-      });
+  let count = 0;
+  for (const node of nodes) {
+    const stopRemote = { ...remote, node: node };
+    distribution.local.comm.send([], stopRemote, (e, v) => {
+      count++;
+      onStop(node, e, v);
+      if (count == nodes.length - 1) {
+        cb();
+      }
     });
-  });
+  }
+}
+
+afterAll((done) => {
+  cleanUpNodes(done);
 });
