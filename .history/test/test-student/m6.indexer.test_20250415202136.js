@@ -137,3 +137,11 @@ afterAll((done) => {
   };
   stopNodes(0);
 });
+    }
+    remote.node = nodes[index];
+    distribution.local.comm.send([], remote, (e, v) => {
+      stopNodes(index + 1);
+    });
+  };
+  stopNodes(0);
+});
