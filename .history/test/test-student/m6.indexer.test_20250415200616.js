@@ -15,6 +15,7 @@ const generateNodes = (count) =>
 
 const nodes = generateNodes(5);
 
+
 jest.setTimeout(3600000);
 
 test("M6: index test", (done) => {

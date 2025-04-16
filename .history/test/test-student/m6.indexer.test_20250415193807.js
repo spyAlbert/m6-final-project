@@ -7,13 +7,7 @@ const indexGroup = {};
 */
 let localServer = null;
 
-const generateNodes = (count) =>
-  Array.from({ length: count }, (_, i) => ({
-    ip: '127.0.0.1',
-    port: 7110 + i
-  }));
-
-const nodes = generateNodes(5);
+const { nodes } = require("../../distribution/engine/nodes");
 
 jest.setTimeout(3600000);
 

@@ -7,13 +7,7 @@ const indexGroup = {};
 */
 let localServer = null;
 
-const generateNodes = (count) =>
-  Array.from({ length: count }, (_, i) => ({
-    ip: '127.0.0.1',
-    port: 7110 + i
-  }));
-
-const nodes = generateNodes(5);
+const { nodes } = require("../../distribution/engine/nodes");
 
 jest.setTimeout(3600000);
 
@@ -112,6 +106,13 @@ beforeAll((done) => {
       });
     };
     spawnNext(0);
+            distribution.local.status.spawn(n5, (e, v) => {
+              cb();
+            });
+          });
+        });
+      });
+    });
   };
 
   distribution.node.start((server) => {
@@ -130,6 +131,7 @@ beforeAll((done) => {
 
 afterAll((done) => {
   const remote = {service: 'status', method: 'stop'};
+  const nodes = [n1, n2, n3, n4, n5];
   const stopNodes = (index) => {
     if (index >= nodes.length) {
       localServer.close();

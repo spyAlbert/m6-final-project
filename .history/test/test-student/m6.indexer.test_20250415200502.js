@@ -13,7 +13,8 @@ const generateNodes = (count) =>
     port: 7110 + i
   }));
 
-const nodes = generateNodes(5);
+const nodes = generateNodes(3); // 👈 改这里就能变换 node 数量
+
 
 jest.setTimeout(3600000);
 

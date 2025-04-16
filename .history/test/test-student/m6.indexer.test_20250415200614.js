@@ -13,7 +13,8 @@ const generateNodes = (count) =>
     port: 7110 + i
   }));
 
-const nodes = generateNodes(5);
+const nodes = generateNodes();
+
 
 jest.setTimeout(3600000);
 
