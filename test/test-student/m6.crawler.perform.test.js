@@ -14,6 +14,108 @@ const ncdcGroup = {};
 let localServer = null;
 
 const { nodes } = require("../../distribution/engine/nodes.js");
+const basePackages = [
+  "cncjs",
+  "anymatch",
+  "backo2",
+  "bootstrap",
+  "buble",
+  "bubleify",
+  "chalk",
+  "classnames",
+  "commander",
+  "connect",
+  "consolidate",
+  "cookie",
+  "cors",
+  "dateformat",
+  "depcheck",
+  "enzyme",
+  "fleg",
+  "gm",
+  "history",
+  "husky",
+  "immer",
+  "isfunction",
+  "isnumber",
+  "isobject",
+  "isstream",
+  "jest",
+  "json3",
+  "jsonfile",
+  "jsonpointer",
+  "jsonwebtoken",
+  "jsprim",
+  "lcid",
+  "mkdirp",
+  "moment",
+  "morgan",
+  "nodemon",
+  "normalizr",
+  "openurl",
+  "opn",
+  "options",
+  "path",
+  "postcss",
+  "preact",
+  "progress",
+  "qs",
+  "rescope",
+  "rimraf",
+  "send",
+  "serialport",
+  "stylis",
+  "khoom",
+  "mhy",
+  "aws4",
+  "axios",
+  "browserslist",
+  "callsite",
+  "commonizer",
+  "concurrently",
+  "cssnano",
+  "dayjs",
+  "debounce",
+  "debug",
+  "deepmerge",
+  "destroy",
+  "escodegen",
+  "eslint",
+  "etag",
+  "eventemitter3",
+  "events",
+  "express",
+  "finalhandler",
+  "getpass",
+  "happypack",
+  "isstring",
+  "jsuri",
+  "lodash",
+  "miragejs",
+  "mongodb",
+  "mousetrap",
+  "parseqs",
+  "passport",
+  "portscanner",
+  "range_check",
+  "recompose",
+  "redux",
+  "request",
+  "stringstream",
+  "superagent",
+  "taskflows",
+  "tfunk",
+  "tslib",
+  "tweetnacl",
+  "ultron",
+  "underscore",
+  "undici",
+  "validate",
+  "ws",
+  "xterm",
+  "y18n",
+  "yargs",
+];
 jest.setTimeout(3600000);
 test("(1 pts) student test", (done) => {
   // test example word count
@@ -21,12 +123,7 @@ test("(1 pts) student test", (done) => {
   const mapper = crawler.map;
   const reducer = crawler.reduce;
 
-  const dataset = [
-    { khoom: "null" },
-    { toyako: "null" },
-    { mhy: "null" },
-    { cncjs: "null" },
-  ];
+  const dataset = basePackages.map((v) => ({ [v]: "null" }));
 
   const doMapReduce = (cb) => {
     const startTime = performance.now();
@@ -39,7 +136,7 @@ test("(1 pts) student test", (done) => {
       },
       (e, v) => {
         try {
-          const numRecords = v.length;
+          const numRecords = dataset.length;
           const endTime = performance.now();
           const timeInSeconds = (endTime - startTime) / 1000;
           const throughput = numRecords / timeInSeconds;

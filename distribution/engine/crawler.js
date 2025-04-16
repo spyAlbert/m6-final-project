@@ -17,10 +17,10 @@ crawler.map = (key, _value) => {
     return [];
   }
 
-  // Delay (to be polite)
-  const delay = 1000;
-  const start = Date.now();
-  while (Date.now() - start < delay) {}
+  // // Delay (to be polite)
+  // const delay = 1000;
+  // const start = Date.now();
+  // while (Date.now() - start < delay) {}
 
   const latestVersion = metadata["dist-tags"]?.latest;
   const latestMeta = metadata.versions?.[latestVersion] || {};
@@ -34,7 +34,7 @@ crawler.map = (key, _value) => {
 
   // Prepare list of new packages to crawl
   const deps = Object.keys(extracted.dependencies);
-  return { output: { [pkgName]: deps}, forStoring: extracted };
+  return { output: { [pkgName]: deps }, forStoring: extracted };
 };
 
 crawler.reduce = (key, values) => {
