@@ -24,7 +24,7 @@ const rootPackages = [
   // package with medium number of dependencies (for simple testing)
   "express",
   // packages with many dependencies (for stress testing)
-  //"khoom",
+  "khoom",
   // "toyako",
   // "mhy",
   // "cncjs",

@@ -5,5 +5,4 @@ for (let i = 0; i < 5; i++) {
     port: 7110 + i,
   });
 }
-
 module.exports = { nodes };
