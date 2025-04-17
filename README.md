@@ -19,5 +19,5 @@ LoC: <480>
 
 ## How different are these numbers for different members in the team and why?
 
-Interestingly, the number of lines of code written by each team member varied less than expected. While one might assume components like the crawler would require more code, our crawler was relatively concise, leveraging the existing MapReduce framework.
+Interestingly, the number of lines of code written by each team member varied less than expected. While one might assume components like the crawler could require more code, our crawler was relatively concise, leveraging the existing MapReduce framework.
 In contrast, other parts of the system—such as the query engine and PageRank pipeline—required more lines of code due to their logic-heavy design. The query engine, for example, handled ranking, spellchecking, and scoring logic, while the PageRank implementation involved iterative computation and tuning convergence behavior. Overall, the variation in LoC came down more to the nature of each component’s logic than the raw complexity of distributed execution, since the shared infrastructure handled much of the heavy lifting.

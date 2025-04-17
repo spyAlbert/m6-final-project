@@ -1,4 +1,4 @@
-const distribution = require('../../config.js');
+const distribution = require("../../config.js");
 const id = distribution.util.id;
 const crawler = require("./crawler.js");
 const indexer = require("./indexer.js");
@@ -18,13 +18,13 @@ const groups = {
   pagerank: {},
 };
 
-// Could potentially use this list of packages with the highest number of 
+// Could potentially use this list of packages with the highest number of
 // dependencies: https://gist.github.com/anvaka/8e8fa57c7ee1350e3491
 const rootPackages = [
   // package with medium number of dependencies (for simple testing)
-  "express", 
+  "express",
   // packages with many dependencies (for stress testing)
-  "khoom",
+  //"khoom",
   // "toyako",
   // "mhy",
   // "cncjs",
@@ -39,7 +39,7 @@ function startNodes(cb) {
   for (const node of nodes) {
     distribution.local.status.spawn(node, (e, v) => onSpawn(node, e, v));
   }
-};
+}
 
 function setupGroups(cb) {
   // For now, the the local server node only orchestrates
@@ -71,7 +71,9 @@ function setupCrawler(cb) {
     if (++numResponses === rootPackages.length) cb();
   }
   for (const pkgName of rootPackages) {
-    distribution.crawl.store.put("null", pkgName, (e, v) => handleResponse(pkgName, e, v));
+    distribution.crawl.store.put("null", pkgName, (e, v) =>
+      handleResponse(pkgName, e, v)
+    );
   }
 }
 
@@ -81,9 +83,9 @@ function cleanUpNodes() {
     if (e) console.log("error stopping node", node, e);
     if (++numResponses === nodes.length) localServer.close();
   }
-  const remote = {service: 'status', method: 'stop'};
+  const remote = { service: "status", method: "stop" };
   for (const node of nodes) {
-    const stopRemote = {...remote, node: node};
+    const stopRemote = { ...remote, node: node };
     distribution.local.comm.send([], stopRemote, (e, v) => onStop(node, e, v));
   }
 }
@@ -123,12 +125,14 @@ function runEngine() {
                     reduceOut: "query",
                   };
                   distribution.index.mr.exec(mrIndexConfig, (e, v) => {
-                    console.log("\n\n\n------FINISHED RUNNING ENGINE------\n\n\n");
+                    console.log(
+                      "\n\n\n------FINISHED RUNNING ENGINE------\n\n\n"
+                    );
                     localServer.close();
                   });
                 });
               });
-            })
+            });
           });
         });
       });
