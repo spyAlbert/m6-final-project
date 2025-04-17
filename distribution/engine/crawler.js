@@ -38,9 +38,6 @@ crawler.map = (key, _value, callback) => {
     description: metadata.description,
     dependencies: dependencies,
   };
-
-  // const deps = Object.keys(extracted.dependencies);
-  // return {output: [{ [pkgName]: deps}], forStoring: extracted};
   
   global.distribution.local.store.put(true, {key: pkgName, gid: "crawl"}, (e, v) => {
     if (e) console.log(`failed to record that ${pkgName} was crawled`, e, v);

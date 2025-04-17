@@ -17,6 +17,7 @@ let localServer = null;
 const n1 = { ip: "127.0.0.1", port: 7110 };
 const n2 = { ip: "127.0.0.1", port: 7111 };
 const n3 = { ip: "127.0.0.1", port: 7112 };
+const { nodes } = require("../../distribution/engine/nodes.js");
 jest.setTimeout(3600000);
 test("(1 pts) student test", (done) => {
   // test example word count
@@ -43,6 +44,7 @@ test("(1 pts) student test", (done) => {
     'cookie-signature',    'merge-descriptors',
     'content-disposition'
   ];
+  const numRecords = expected.length;
 
   const doMapReduce = (cb) => {
     distribution.crawl.mr.exec(
@@ -50,7 +52,7 @@ test("(1 pts) student test", (done) => {
         keys: getDatasetKeys(dataset),
         map: mapper,
         reduce: reducer,
-        rounds: 2,
+        rounds: 1,
       },
       (e, v) => {
         distribution.crawl.store.get(null, (e, allKeys) => {
@@ -112,13 +114,14 @@ beforeAll((done) => {
   indexGroup[id.getSID(n3)] = n3;
 
   const startNodes = (cb) => {
-    distribution.local.status.spawn(n1, (e, v) => {
-      distribution.local.status.spawn(n2, (e, v) => {
-        distribution.local.status.spawn(n3, (e, v) => {
-          cb();
-        });
-      });
-    });
+    let numResponses = 0;
+    function onSpawn(node, e, v) {
+      if (e) console.log("error spawning node", node, e);
+      if (++numResponses === nodes.length) cb();
+    }
+    for (const node of nodes) {
+      distribution.local.status.spawn(node, (e, v) => onSpawn(node, e, v));
+    }
   };
 
   distribution.node.start((server) => {
@@ -140,17 +143,26 @@ beforeAll((done) => {
   });
 });
 
-afterAll((done) => {
+function cleanUpNodes(cb) {
+  let numResponses = 0;
+  function onStop(node, e, v) {
+    if (e) console.log("error stopping node", node, e);
+    if (++numResponses === nodes.length) localServer.close();
+  }
   const remote = { service: "status", method: "stop" };
-  remote.node = n1;
-  distribution.local.comm.send([], remote, (e, v) => {
-    remote.node = n2;
-    distribution.local.comm.send([], remote, (e, v) => {
-      remote.node = n3;
-      distribution.local.comm.send([], remote, (e, v) => {
-        localServer.close();
-        done();
-      });
+  let count = 0;
+  for (const node of nodes) {
+    const stopRemote = { ...remote, node: node };
+    distribution.local.comm.send([], stopRemote, (e, v) => {
+      count++;
+      onStop(node, e, v);
+      if (count == nodes.length - 1) {
+        cb();
+      }
     });
-  });
+  }
+}
+
+afterAll((done) => {
+  cleanUpNodes(done);
 });

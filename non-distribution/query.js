@@ -47,6 +47,5 @@ if (args.length < 1) {
   console.error('Usage: ./query.js [query_strings...]');
   process.exit(1);
 }
-
 const indexFile = 'd/global-index.txt'; // Path to the global index file
 query(indexFile, args);

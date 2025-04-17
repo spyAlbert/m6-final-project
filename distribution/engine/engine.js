@@ -1,4 +1,4 @@
-const distribution = require('../../config.js');
+const distribution = require("../../config.js");
 const id = distribution.util.id;
 const crawler = require("./crawler.js");
 const indexer = require("./indexer.js");
@@ -17,19 +17,18 @@ const groups = {
   query: {},
   pagerank: {},
 };
-// Could potentially use this list of packages with the highest number of 
+
+// Could potentially use this list of packages with the highest number of
 // dependencies: https://gist.github.com/anvaka/8e8fa57c7ee1350e3491
 const rootPackages = [
   // package with medium number of dependencies (for simple testing)
-  "express", 
-  "mocha",
-  //"lodash",
+  "express",
   // packages with many dependencies (for stress testing)
   // "bloater",
-  //"khoom",
-  // "toyako",
-  // "mhy",
-  // "cncjs",
+  "khoom",
+  "toyako",
+  "mhy",
+  "cncjs",
   // "csv",
   // "mathjs",
   // "touch",
@@ -52,7 +51,7 @@ function startNodes(cb) {
   for (const node of nodes) {
     distribution.local.status.spawn(node, (e, v) => onSpawn(node, e, v));
   }
-};
+}
 
 function setupGroups(cb) {
   // For now, the the local server node only orchestrates
@@ -94,9 +93,9 @@ function cleanUpNodes() {
     if (e) console.log("error stopping node", node, e);
     if (++numResponses === nodes.length) localServer.close();
   }
-  const remote = {service: 'status', method: 'stop'};
+  const remote = { service: "status", method: "stop" };
   for (const node of nodes) {
-    const stopRemote = {...remote, node: node};
+    const stopRemote = { ...remote, node: node };
     distribution.local.comm.send([], stopRemote, (e, v) => onStop(node, e, v));
   }
 }
@@ -133,27 +132,26 @@ function runEngine() {
               };
               distribution.index.mr.exec(mrPagerankConfig, (e, v) => {
                 const pagerankEnd = performance.now();
-                console.log(`PAGERANK: ${numCrawled} packages in ${(pagerankEnd - pagerankStart)/1000}s`);
-                // console.log("\n\n\n------STARTING INDEXING------\n\n\n");
-                // const indexStart = performance.now();
-                // distribution.index.store.get(null, (e, packageNames) => {
-                //   const mrIndexConfig = {
-                //     map: indexer.map,
-                //     reduce: indexer.reduce,
-                //     keys: packageNames,
-                //   };
-                //   distribution.index.mr.exec(mrIndexConfig, (e, v) => {
-                //     const indexEnd = performance.now();
-                //     const numNGrams = v.length;
-                //     console.log("\n\n\n------FINISHED RUNNING ENGINE------\n\n\n");
-                //     console.log(`crawled ${numCrawled} packages with ${numRealZeroes} real 0s, ${numFakeZeroes} fake 0s, indexed ${numNGrams} n-grams`);
-                //     const resultsToSec = (start, end) => (end - start) / 1000;
-                //     console.log(`CRAWL: ${resultsToSec(crawlStart, crawlEnd)}s`);
-                //     console.log(`PAGERANK: ${resultsToSec(pagerankStart, pagerankEnd)}s`);
-                //     console.log(`INDEX: ${resultsToSec(indexStart, indexEnd)}s`);
-                //     localServer.close();
-                //   });
-                // });
+                console.log("\n\n\n------STARTING INDEXING------\n\n\n");
+                const indexStart = performance.now();
+                distribution.index.store.get(null, (e, packageNames) => {
+                  const mrIndexConfig = {
+                    map: indexer.map,
+                    reduce: indexer.reduce,
+                    keys: packageNames,
+                  };
+                  distribution.index.mr.exec(mrIndexConfig, (e, v) => {
+                    const indexEnd = performance.now();
+                    const numNGrams = v.length;
+                    console.log("\n\n\n------FINISHED RUNNING ENGINE------\n\n\n");
+                    console.log(`crawled ${numCrawled} packages with ${numRealZeroes} real 0s, ${numFakeZeroes} fake 0s, indexed ${numNGrams} n-grams`);
+                    const resultsToSec = (start, end) => (end - start) / 1000;
+                    console.log(`CRAWL: ${resultsToSec(crawlStart, crawlEnd)}s`);
+                    console.log(`PAGERANK: ${resultsToSec(pagerankStart, pagerankEnd)}s`);
+                    console.log(`INDEX: ${resultsToSec(indexStart, indexEnd)}s`);
+                    localServer.close();
+                  });
+                });
               });
             });
           });
