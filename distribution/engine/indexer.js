@@ -14,9 +14,9 @@ const distribution = global.distribution;
 
 const indexer = {};
 
-indexer.map = function (packageName, packageData) {
-  const description = packageData.description;
-  console.log(`index mapper: ${packageName}`);
+indexer.map = function (packageName, packageData, callback) {
+  const description = packageData.description || "";
+  //console.log(`index mapper: ${packageName}`);
   // 1) process text to extract words
   const words = description.replace(/[^A-Za-z]/g, " ")
                            .split(" ")
@@ -42,14 +42,16 @@ indexer.map = function (packageName, packageData) {
   for (const nGram of nGrams) {
     output.push({[nGram]: {package: packageName, description: description, pagerank: packageData.pagerank}});
   }
-  return output;
+  callback(null, output);
 }
 
-indexer.reduce = function (nGram, results) {
-  console.log(`index reducer: ${nGram}`);
-  const output = {};
-  output[nGram] = results.sort((a, b) => b.pagerank - a.pagerank);
-  return output;
+indexer.reduce = function (nGram, results, callback) {
+  // console.log(`index reducer: ${nGram}`);
+  const sortedResults = results.sort((a, b) => b.pagerank - a.pagerank);
+  global.distribution.query.store.put(sortedResults, nGram, (e, v) => {
+    // if (e) console.log(`failed to store index results for ${nGram}`);
+    callback(null, {[nGram]: sortedResults.map(res => res.package)});
+  });
 }
 
 module.exports = indexer;

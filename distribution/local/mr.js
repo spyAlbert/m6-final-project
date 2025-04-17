@@ -14,42 +14,38 @@ mr.map = function (serviceName, keys, gid, out, memWay, callback) {
       }
     }
     if (allKeys.length === 0) {
-      return callback(null, allKeys);
+      return callback(null, 0);
     }
-    let responseCount = 0;
-    const handleResponse = (e, v) => {
-      if (++responseCount === allKeys.length) {
-        callback(e, v);
+    let totalCarry = 0;
+    let numResponses = 0;
+    let handleResponse = () => {
+      if (++numResponses === allKeys.length) {
+        callback(null, totalCarry);
       }
     }
-    for (let key of allKeys) {
+    for (const key of allKeys) {
       global.distribution.local.store.get({ key: key, gid: gid }, (e, val) => {
-        if (e) return handleResponse(e, val);
+        if (e) return handleResponse();
         global.distribution.local.routes.get(serviceName, (e, v) => {
           // change the val to new val
           let mapper = v.map;
-          const mapOutput = mapper(key, val);
-          v = mapOutput.output || mapOutput;
-          let newKey = key + "_intermidate";
-          global.distribution.local[memWay].put(
-            v,
-            { key: newKey, gid: gid },
-            (e, v) => {
-              global.distribution.local.store.del(
-                { key: key, gid: gid },
-                (e, v) => {
-                  if (out && mapOutput.forStoring) {
-                    global.distribution[out].store.put(mapOutput.forStoring, key, (e, v) => {
-                      if (e) console.log(`failed to store ${key} for ${out}`, e);
-                      handleResponse(e, v);
-                    });
-                  } else {
-                    return handleResponse(e, v);
-                  }
-                },
-              );
+          mapper(key, val, (e, mapResults) => {
+            //if (gid === "index") console.log(`${key} PR-MAP RESULTS:`, mapResults);
+            if (mapResults && mapResults.CARRY !== undefined) {
+              totalCarry += mapResults.CARRY;
+              mapResults = mapResults.OUTPUT;
             }
-          );
+            if (mapResults.length === 0) return handleResponse();
+            let newKey = key + "_intermidate";
+            global.distribution.local[memWay].put(
+              mapResults,
+              { key: newKey, gid: gid  },
+              (e, v) => {
+                if (e) console.log(`MAP: failed to store ${newKey} intermediate result`);
+                return handleResponse();
+              }
+            );
+          });
         });
       });
     }
@@ -72,7 +68,6 @@ mr.shuffle = function (keys, gid, nodeGroup, compactor, memWay, callback) {
     if (allKeys.length === 0) {
       return callback(null, allKeys);
     }
-    let responseCount = 0;
     const resultMap = {};
     const performShuffle = () => {
       //shuffle now
@@ -97,14 +92,14 @@ mr.shuffle = function (keys, gid, nodeGroup, compactor, memWay, callback) {
           [currObj, { key: kid, gid: gid }],
           remote,
           (e, v) => {
-            responseCount++;
-            if (responseCount === allNewKeys.length) {
+            if (++responseCount === allNewKeys.length) {
               return callback(null, allNewKeys);
             }
           }
         );
       }
     }
+    let responseCount = 0;
     const handleResponse = (e, v) => {
       if (++responseCount === allKeys.length) {
         performShuffle();
@@ -153,11 +148,11 @@ mr.shuffle = function (keys, gid, nodeGroup, compactor, memWay, callback) {
   });
 };
 
-mr.reduce = function (serviceName, keys, gid, out, memWay, callback) {
+mr.reduce = function (serviceName, keys, gid, out, memWay, carryOver, callback) {
   callback = callback || function () {};
   global.distribution.local[memWay].get({ gid: gid }, (e, v) => {
     // focus on the key match the keys
-    if (e) return callback(e, null);
+    if (e) return callback(e, {results: [], converged: true});
     const allKeys = [];
     for (let key of v) {
       if (keys.includes(key)) {
@@ -165,37 +160,46 @@ mr.reduce = function (serviceName, keys, gid, out, memWay, callback) {
       }
     }
     if (allKeys.length === 0) {
-      return callback(null, allKeys);
+      return callback({results: [], converged: true});
     }
-    const result = [];
+    let results = [];
+    let converged = undefined;
     let responseCount = 0;
     const handleResponse = (e, v) => {
+      if (v) {
+        if (v.CONVERGED !== undefined) {
+          if (converged !== undefined) {
+            converged = converged && v.CONVERGED;
+          } else {
+            converged = v.CONVERGED;
+          }
+          v = v.OUTPUT;
+        }
+        results.push(v);
+      }
       if (++responseCount === allKeys.length) {
-        callback(e, result);
+        //ed reducing`, results);
+        callback(e, {results: results, converged: converged});
       }
     }
     for (let key of allKeys) {
       global.distribution.local[memWay].get(
         { key: key, gid: gid },
         (e, obj) => {
+          if (!obj || !obj.val || e) {
+            //console.log("ERROR IN REDUCER?", key, e, obj);
+            return handleResponse(null, null);
+          }
           let valList = obj.val;
-          if (e) return handleResponse(e, obj);
           global.distribution.local.routes.get(serviceName, (e, v) => {
             const reducer = v.reduce;
-            const reducerOutput = reducer(obj.key, valList);
-            result.push(reducerOutput);
-            const res = reducerOutput.RESULT || reducerOutput;
-            global.distribution.local[memWay].del({ key: key, gid: gid }, (e, v) => {
-              if (out && (reducerOutput.CONVERGING === undefined || reducerOutput.CONVERGING)) {
-              // if (out) {
-                let newKey = Object.keys(res)[0];
-                global.distribution[out].store.put(res[newKey], newKey, (e, v) => {
-                  if (e) console.log(`failed to store ${newKey} for ${out}`, e)
-                  return handleResponse(e, v);
-                });
-              } else {
-                return handleResponse(e, v);
-              }
+            if (carryOver) {
+              valList = {CARRY: carryOver, VALUES: valList};
+            }
+            reducer(obj.key, valList, (e, reducerOutput) => {
+              global.distribution.local[memWay].del({ key: key, gid: gid }, (e, v) => {
+                handleResponse(null, reducerOutput);
+              });
             });
           });
         }

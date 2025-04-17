@@ -52,8 +52,9 @@ function mr(config) {
     const memWay = configuration.memory ? "mem" : "store";
     const mapOut = configuration.mapOut;
     const reduceOut = configuration.reduceOut;
-    let rounds = configuration.rounds;
-    if (rounds) console.log(`MAP REDUCE: ${rounds} ROUNDS LEFT`);
+    let rounds = configuration.rounds || 1;
+    let carryOver = 0;
+    if (rounds) console.log(`MAP REDUCE: ${rounds} ROUNDS LEFT, ${keys.length} KEYS`);
     currId++;
     const serviceName = "mr-" + currId;
     global.distribution.local.groups.get(context.gid, (e, v) => {
@@ -73,6 +74,8 @@ function mr(config) {
             [serviceName, keys, context.gid, mapOut, memWay],
             remote,
             (e, v) => {
+              const carrySum = Object.values(v).reduce((acc, c) => acc + c, 0);
+              carryOver = carrySum / keys.length;
               remote.method = "shuffle";
               global.distribution[context.gid].comm.send(
                 [keys, context.gid, nodeGroup, compactor, memWay],
@@ -88,58 +91,22 @@ function mr(config) {
                   remote.method = "reduce";
                   const allKeyList = Array.from(allNewKeys);
                   global.distribution[context.gid].comm.send(
-                    [serviceName, allKeyList, context.gid, reduceOut, memWay],
+                    [serviceName, allKeyList, context.gid, reduceOut, memWay, carryOver],
                     remote,
                     (e, v) => {
-                      let resultList = [];
-                      const allValList = Object.values(v);
-                      for (let currList of allValList) {
-                        for (let objVal of currList) {
-                          resultList.push(objVal);
-                        }
-                      }
-                      //flat
-                      resultList = resultList.flat();
-                      const converged = resultList.reduce((acc, res) => acc && !!res.CONVERGING, true);
-                      resultList = resultList.map(res => res.RESULT || res);
+                      let responses = Object.values(v);
+                      const resultList = responses.map(resp => resp.results).flat();
+                      const converged = responses.reduce((acc, resp) => (resp.converged !== undefined) && resp.converged && acc, true);
                       // deregister
                       global.distribution[context.gid].routes.rem(
                         serviceName,
                         (e, v) => {
-                          if (!rounds || resultList.length === 0 || converged) {
+                          if (!rounds || resultList.length === 0 || converged || --rounds === 0) {
                             return cb(null, resultList);
                           } else {
-                            rounds--;
-                            if (rounds === 0) {
-                              return cb(null, resultList);
-                            } else {
-                              //next round
-                              configuration.rounds = rounds;
-                              //change dataset first
-                              let cntr = 0;
-                              console.log(resultList.length);
-
-                              // Send the dataset to the cluster
-                              resultList.forEach((o) => {
-                                const key = Object.keys(o)[0];
-                                const value = o[key];
-                                global.distribution[context.gid].store.put(
-                                  value,
-                                  key,
-                                  (e, v) => {
-                                    cntr++;
-                                    // Once the dataset is in place, run the map reduce
-                                    if (cntr === resultList.length) {
-                                      console.log(resultList.length);
-                                      configuration.keys =
-                                        getDatasetKeys(resultList);
-                                      console.log(configuration.keys);
-                                      exec(configuration, cb);
-                                    }
-                                  }
-                                );
-                              });
-                            }
+                            configuration.rounds = rounds;
+                            configuration.keys = resultList.map(res => Object.keys(res)[0]);
+                            exec(configuration, cb);
                           }
                         }
                       );

@@ -17,17 +17,30 @@ const groups = {
   query: {},
   pagerank: {},
 };
-
 // Could potentially use this list of packages with the highest number of 
 // dependencies: https://gist.github.com/anvaka/8e8fa57c7ee1350e3491
 const rootPackages = [
   // package with medium number of dependencies (for simple testing)
   "express", 
+  "mocha",
+  //"lodash",
   // packages with many dependencies (for stress testing)
-  "khoom",
+  // "bloater",
+  //"khoom",
   // "toyako",
   // "mhy",
   // "cncjs",
+  // "csv",
+  // "mathjs",
+  // "touch",
+  // "create-hash",
+  // "grpc",
+  // "readline",
+  // "bytes",
+  // "lodash",
+  // "webche",
+  // "pb-schema",
+  // "babylonia",
 ];
 
 function startNodes(cb) {
@@ -71,7 +84,7 @@ function setupCrawler(cb) {
     if (++numResponses === rootPackages.length) cb();
   }
   for (const pkgName of rootPackages) {
-    distribution.crawl.store.put("null", pkgName, (e, v) => handleResponse(pkgName, e, v));
+    distribution.crawl.store.put(false, pkgName, (e, v) => handleResponse(pkgName, e, v));
   }
 }
 
@@ -99,36 +112,50 @@ function runEngine() {
           const mrCrawlConfig = {
             map: crawler.map,
             reduce: crawler.reduce,
-            rounds: 2, // TODO: figure out best number of rounds or make mapreduce detect when its found all (or a sufficient amount) of packages
+            rounds: 4, // TODO: figure out best number of rounds or make mapreduce detect when it's found all (or a sufficient amount) of packages
             keys: rootPackages,
-            mapOut: "pagerank",
           };
+          const crawlStart = performance.now();
           distribution.crawl.mr.exec(mrCrawlConfig, (e, v) => {
+            const crawlEnd = performance.now();
             console.log("\n\n\n------STARTING PAGERANKING------\n\n\n");
-            pageranker.sanitize((e, storedPackages) => {
+            const pagerankStart = performance.now();
+            pageranker.sanitize((e, v) => {
+              const storedPackages = v.allPkgs;
+              const numRealZeroes = v.numRealZeroes;
+              const numFakeZeroes = v.numFakeZeroes;
+              const numCrawled = storedPackages.length;
               mrPagerankConfig = {
                 map: pageranker.map,
                 reduce: pageranker.reduce,
-                rounds: 100,
+                rounds: 15,
                 keys: storedPackages,
-                reduceOut: "index",
               };
-              distribution.pagerank.mr.exec(mrPagerankConfig, (e, v) => {
-                console.log("\n\n\n------STARTING INDEXING------\n\n\n");
-                distribution.index.store.get(null, (e, packageNames) => {
-                  const mrIndexConfig = {
-                    map: indexer.map,
-                    reduce: indexer.reduce,
-                    keys: packageNames,
-                    reduceOut: "query",
-                  };
-                  distribution.index.mr.exec(mrIndexConfig, (e, v) => {
-                    console.log("\n\n\n------FINISHED RUNNING ENGINE------\n\n\n");
-                    localServer.close();
-                  });
-                });
+              distribution.index.mr.exec(mrPagerankConfig, (e, v) => {
+                const pagerankEnd = performance.now();
+                console.log(`PAGERANK: ${numCrawled} packages in ${(pagerankEnd - pagerankStart)/1000}s`);
+                // console.log("\n\n\n------STARTING INDEXING------\n\n\n");
+                // const indexStart = performance.now();
+                // distribution.index.store.get(null, (e, packageNames) => {
+                //   const mrIndexConfig = {
+                //     map: indexer.map,
+                //     reduce: indexer.reduce,
+                //     keys: packageNames,
+                //   };
+                //   distribution.index.mr.exec(mrIndexConfig, (e, v) => {
+                //     const indexEnd = performance.now();
+                //     const numNGrams = v.length;
+                //     console.log("\n\n\n------FINISHED RUNNING ENGINE------\n\n\n");
+                //     console.log(`crawled ${numCrawled} packages with ${numRealZeroes} real 0s, ${numFakeZeroes} fake 0s, indexed ${numNGrams} n-grams`);
+                //     const resultsToSec = (start, end) => (end - start) / 1000;
+                //     console.log(`CRAWL: ${resultsToSec(crawlStart, crawlEnd)}s`);
+                //     console.log(`PAGERANK: ${resultsToSec(pagerankStart, pagerankEnd)}s`);
+                //     console.log(`INDEX: ${resultsToSec(indexStart, indexEnd)}s`);
+                //     localServer.close();
+                //   });
+                // });
               });
-            })
+            });
           });
         });
       });

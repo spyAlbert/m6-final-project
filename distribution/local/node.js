@@ -27,7 +27,7 @@ const start = function (callback) {
     // Write some code...
 
     const path = url.parse(req.url, true);
-    console.log(path.pathname);
+    // console.log(path.pathname);
     const pathParts = path.pathname.split("/");
     if (pathParts.length !== 4) {
       res.writeHead(400, { "Content-Type": "application/json" });
@@ -68,6 +68,7 @@ const start = function (callback) {
       // Write some code...
       let body = util.deserialize(data);
       local.routes.get({ service: serviceName, gid: gid }, (e, s) => {
+        try {
         if (e) {
           res.writeHead(200, { "Content-Type": "application/json" });
           return res.end(util.serialize(e));
@@ -85,6 +86,9 @@ const start = function (callback) {
             res.writeHead(200, { "Content-Type": "application/json" });
             return res.end(util.serialize(compoundResult));
           });
+        }
+        } catch (e) {
+          console.log("SERVER ERROR:", e, s, body);
         }
       });
     });
@@ -109,8 +113,8 @@ const start = function (callback) {
 
   server.on("error", (error) => {
     // server.close();
-    log(`Server error: ${error}`);
-    throw error;
+    console.log(`Server error in node ${global.nodeConfig.port}: ${error}`);
+    //throw error;
   });
 };
 

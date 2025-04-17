@@ -73,6 +73,7 @@ function send(message, remote, callback) {
 
   // Error handle
   req.on("error", (err) => {
+    //console.log(`"${err.message}" in local.comm from ${global.nodeConfig.port} to ${remote.node.port}`) //message, remote, global.nodeConfig.port);
     callback(new Error(err), null);
   });
 

@@ -1,6 +1,7 @@
 const distribution = require('../../config.js');
 const id = distribution.util.id;
 const indexGroup = {};
+const queryGroup = {};
 
 /*
     The local node will be the orchestrator.
@@ -16,9 +17,9 @@ jest.setTimeout(3600000);
 test("M6: index test", (done) => {
   const indexer = require("../../distribution/engine/indexer.js");
 
-  const pkgA = { package: "packageA", description: "single individual", pagerank: 10 };
-  const pkgB = { package: "packageB", description: "document scenario single", pagerank:  5};
-  const pkgC = { package: "packageC", description: "single document scenario document scenario distributed", pagerank: 1 };
+  const pkgA = { name: "packageA", description: "single individual", pagerank: 10 };
+  const pkgB = { name: "packageB", description: "document scenario single", pagerank:  5};
+  const pkgC = { name: "packageC", description: "single document scenario document scenario distributed", pagerank: 1 };
 
   const dataset = [
     { "packageA": pkgA},
@@ -27,23 +28,23 @@ test("M6: index test", (done) => {
   ];
 
   const expected = [
-    { packageA: [pkgA] }, 
-    { packageB: [pkgB] }, 
-    { packageC: [pkgC] }, 
-    { individu: [pkgA]},
-    { singl: [pkgA, pkgB, pkgC] }, 
-    { document: [pkgB, pkgC] }, 
-    { scenario: [pkgB, pkgC] }, 
-    { distribut: [pkgC] }, 
-    { "individu singl": [pkgA] },
-    { "document scenario": [pkgB, pkgC] },
-    { "scenario singl": [pkgB] },
-    { "document singl": [pkgC] },
-    { "distribut scenario": [pkgC] },
-    { "document scenario singl": [pkgB, pkgC] },
-    { "document document scenario": [pkgC] },
-    { "document scenario scenario": [pkgC] },
-    { "distribut document scenario": [pkgC] },
+    { packageA: ["packageA"] }, 
+    { packageB: ["packageB"] }, 
+    { packageC: ["packageC"] }, 
+    { individu: ["packageA"]},
+    { singl: ["packageA", "packageB", "packageC"] }, 
+    { document: ["packageB", "packageC"] }, 
+    { scenario: ["packageB", "packageC"] }, 
+    { distribut: ["packageC"] }, 
+    { "individu singl": ["packageA"] },
+    { "document scenario": ["packageB", "packageC"] },
+    { "scenario singl": ["packageB"] },
+    { "document singl": ["packageC"] },
+    { "distribut scenario": ["packageC"] },
+    { "document scenario singl": ["packageB", "packageC"] },
+    { "document document scenario": ["packageC"] },
+    { "document scenario scenario": ["packageC"] },
+    { "distribut document scenario": ["packageC"] },
   ];
 
   const doMapReduce = (cb) => {
@@ -93,6 +94,10 @@ beforeAll((done) => {
   indexGroup[id.getSID(n2)] = n2;
   indexGroup[id.getSID(n3)] = n3;
 
+  queryGroup[id.getSID(n1)] = n1;
+  queryGroup[id.getSID(n2)] = n2;
+  queryGroup[id.getSID(n3)] = n3;
+
   const startNodes = (cb) => {
     distribution.local.status.spawn(n1, (e, v) => {
       distribution.local.status.spawn(n2, (e, v) => {
@@ -108,9 +113,14 @@ beforeAll((done) => {
 
     startNodes(() => {
       const indexConfig = { gid: "index" };
+      const queryConfig = { gid: "query" };
       distribution.local.groups.put(indexConfig, indexGroup, (e, v) => {
         distribution.index.groups.put(indexConfig, indexGroup, (e, v) => {
-          done();
+          distribution.local.groups.put(queryConfig, queryGroup, (e, v) => {
+            distribution.query.groups.put(queryConfig, queryGroup, (e, v) => {
+              done();
+            });
+          });
         });
       });
     });

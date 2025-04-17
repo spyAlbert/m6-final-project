@@ -2,7 +2,7 @@ const id = require("../util/id");
 function store(config) {
   const context = {};
   context.gid = config.gid || "all";
-  context.hash = config.hash || global.distribution.util.id.naiveHash;
+  context.hash = config.hash || global.distribution.util.id.consistentHash;
 
   /* For the distributed store service, the configuration will
           always be a string */
@@ -132,12 +132,12 @@ function store(config) {
           if (total === 0) return callback(null, "no keys to reconfig");
           for (let key of allKeys) {
             const kid = id.getID(key);
-            console.log(key);
+            //console.log(key);
             const oldNid = context.hash(kid, oldGroupsNids);
-            console.log(oldNid);
+            //console.log(oldNid);
 
             const newNid = context.hash(kid, newGroupsNids);
-            console.log(newNid);
+            //console.log(newNid);
             const newConfig = { gid: context.gid, key: key };
             if (oldNid !== newNid) {
               //need to reconfig

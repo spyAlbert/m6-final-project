@@ -39,7 +39,7 @@ function put(state, configuration, callback) {
   if (!key) {
     key = id.getID(state);
   } else {
-    key = key.replace(/[^a-zA-Z0-9]/g, "_");
+    key = key.replace(/[^a-zA-Z0-9-]/g, "_");
   }
   const filePath = path.join(finalPath, key);
   fs.writeFileSync(filePath, serialization.serialize(state));
@@ -80,7 +80,7 @@ function get(configuration, callback) {
       return callback(null, []);
     }
   }
-  key = key.replace(/[^a-zA-Z0-9]/g, "_");
+  key = key.replace(/[^a-zA-Z0-9-]/g, "_");
   const filePath = path.join(finalPath, key);
   try {
     const data = fs.readFileSync(filePath, "utf8");
@@ -125,7 +125,7 @@ function del(configuration, callback) {
         }
       }
       const val = v;
-      key = key.replace(/[^a-zA-Z0-9]/g, "_");
+      key = key.replace(/[^a-zA-Z0-9-]/g, "_");
       const filePath = path.join(finalPath, key);
       fs.unlink(filePath, (err) => {
         if (err) {

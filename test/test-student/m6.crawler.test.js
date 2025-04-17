@@ -9,7 +9,8 @@
 const distribution = require("../../config.js");
 const id = distribution.util.id;
 
-const ncdcGroup = {};
+const crawlGroup = {};
+const indexGroup = {};
 
 let localServer = null;
 
@@ -22,42 +23,29 @@ test("(1 pts) student test", (done) => {
   const crawler = require("../../distribution/engine/crawler");
   const mapper = crawler.map;
   const reducer = crawler.reduce;
-  console.log(mapper);
 
-  const dataset = [{ express: "null" }];
+  const dataset = [{ "express": false }];
 
   const expected = [
-    { "side-channel": "qs" },
-    { debug: "send" },
-    { encodeurl: "send" },
-    { "escape-html": "send" },
-    { etag: "send" },
-    { fresh: "send" },
-    { "http-errors": "send" },
-    { "mime-types": "send" },
-    { ms: "send" },
-    { "on-finished": "send" },
-    { "range-parser": "send" },
-    { statuses: "send" },
-    { debug: "finalhandler" },
-    { parseurl: "finalhandler" },
-    { statuses: "finalhandler" },
-    { encodeurl: "finalhandler" },
-    { "escape-html": "finalhandler" },
-    { "on-finished": "finalhandler" },
-    { ms: "debug" },
-    { "mime-types": "accepts" },
-    { negotiator: "accepts" },
-    { wrappy: "once" },
-    { debug: "router" },
-    { depd: "router" },
-    { "is-promise": "router" },
-    { parseurl: "router" },
-    { "path-to-regexp": "router" },
+    'express',
+    'qs',                  'etag',
+    'once',                'send',
+    'vary',                'debug',
+    'fresh',               'cookie',
+    'router',              'accepts',
+    'type-is',             'parseurl',
+    'statuses',            'encodeurl',
+    'mime-types',          'proxy-addr',
+    'body-parser',         'escape-html',
+    'http-errors',         'on-finished',
+    'content-type',        'finalhandler',
+    'range-parser',        'serve-static',
+    'cookie-signature',    'merge-descriptors',
+    'content-disposition'
   ];
 
   const doMapReduce = (cb) => {
-    distribution.ncdc.mr.exec(
+    distribution.crawl.mr.exec(
       {
         keys: getDatasetKeys(dataset),
         map: mapper,
@@ -65,12 +53,27 @@ test("(1 pts) student test", (done) => {
         rounds: 2,
       },
       (e, v) => {
-        try {
-          expect(v).toEqual(expect.arrayContaining(expected));
-          done();
-        } catch (e) {
-          done(e);
-        }
+        distribution.crawl.store.get(null, (e, allKeys) => {
+          const crawledPkgs = []
+          let ctr = 0;
+          const afterGet = (key, value) => {
+            if (value) {
+              crawledPkgs.push(key);
+            }
+            
+            if (++ctr === allKeys.length) {
+              try {
+                expect(crawledPkgs).toEqual(expect.arrayContaining(expected));
+                done();
+              } catch (e) {
+                done(e);
+              }
+            }
+          }
+          for (const key of allKeys) {
+            distribution.crawl.store.get(key, (e, v) => afterGet(key, v));
+          }
+        });
       }
     );
   };
@@ -80,7 +83,7 @@ test("(1 pts) student test", (done) => {
   dataset.forEach((o) => {
     const key = Object.keys(o)[0];
     const value = o[key];
-    distribution.ncdc.store.put(value, key, (e, v) => {
+    distribution.crawl.store.put(value, key, (e, v) => {
       cntr++;
       // Once the dataset is in place, run the map reduce
       if (cntr === dataset.length) {
@@ -100,9 +103,13 @@ function getDatasetKeys(dataset) {
 }
 
 beforeAll((done) => {
-  ncdcGroup[id.getSID(n1)] = n1;
-  ncdcGroup[id.getSID(n2)] = n2;
-  ncdcGroup[id.getSID(n3)] = n3;
+  crawlGroup[id.getSID(n1)] = n1;
+  crawlGroup[id.getSID(n2)] = n2;
+  crawlGroup[id.getSID(n3)] = n3;
+
+  indexGroup[id.getSID(n1)] = n1;
+  indexGroup[id.getSID(n2)] = n2;
+  indexGroup[id.getSID(n3)] = n3;
 
   const startNodes = (cb) => {
     distribution.local.status.spawn(n1, (e, v) => {
@@ -117,11 +124,16 @@ beforeAll((done) => {
   distribution.node.start((server) => {
     localServer = server;
 
-    const ncdcConfig = { gid: "ncdc" };
+    const crawlConfig = { gid: "crawl" };
+    const indexConfig = { gid: "index" };
     startNodes(() => {
-      distribution.local.groups.put(ncdcConfig, ncdcGroup, (e, v) => {
-        distribution.ncdc.groups.put(ncdcConfig, ncdcGroup, (e, v) => {
-          done();
+      distribution.local.groups.put(crawlConfig, crawlGroup, (e, v) => {
+        distribution.crawl.groups.put(crawlConfig, crawlGroup, (e, v) => {
+          distribution.local.groups.put(indexConfig, indexGroup, (e, v) => {
+            distribution.index.groups.put(indexConfig, indexGroup, (e, v) => {
+              done();
+            });
+          });
         });
       });
     });

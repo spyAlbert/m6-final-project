@@ -1,6 +1,6 @@
 const distribution = require('../../config.js');
 const id = distribution.util.id;
-const pagerankGroup = {};
+const indexGroup = {};
 
 /*
     The local node will be the orchestrator.
@@ -22,8 +22,8 @@ test("M6: test that a simple pagerank graph converges", (done) => {
   ];
 
   const expected = [
-    { A: { pagerank: 1, dependencies: ["B"] } }, 
-    { B: { pagerank: 1, dependencies: ["A"] } }, 
+    { A: 1 }, 
+    { B: 1 }, 
   ];
 
   const doMapReduce = (cb) => {
@@ -33,7 +33,7 @@ test("M6: test that a simple pagerank graph converges", (done) => {
       keys: ["A", "B"],
       rounds: 100,
     };
-    distribution.pagerank.mr.exec(mrPagerankConfig, (e, v) => {
+    distribution.index.mr.exec(mrPagerankConfig, (e, v) => {
 
       try {
         expect(v).toEqual(expect.arrayContaining(expected));
@@ -49,7 +49,7 @@ test("M6: test that a simple pagerank graph converges", (done) => {
   dataset.forEach((o) => {
     const key = Object.keys(o)[0];
     const value = o[key];
-    distribution.pagerank.store.put(value, key, (e, v) => {
+    distribution.index.store.put(value, key, (e, v) => {
       cntr++;
       // Once the dataset is in place, run the map reduce
       if (cntr === dataset.length) {
@@ -70,10 +70,10 @@ test("M6: slightly more complicated pagerank graph", (done) => {
   ];
 
   const expected = [
-    { "1": { pagerank: 1.52, dependencies: ["2", "3", "4"] }},
-    { "2": { pagerank: 0.48, dependencies: ["3", "4"] } },
-    { "3": { pagerank: 1.16, dependencies: ["1"] }},
-    { "4": { pagerank: 0.76, dependencies: ["1", "3"] }},
+    { "1": 1.47 },
+    { "2": 0.57 },
+    { "3": 1.15 },
+    { "4": 0.81 },
   ];
 
   const doMapReduce = (cb) => {
@@ -83,8 +83,7 @@ test("M6: slightly more complicated pagerank graph", (done) => {
       keys: ["1", "2", "3", "4"],
       rounds: 100,
     };
-    distribution.pagerank.mr.exec(mrPagerankConfig, (e, v) => {
-
+    distribution.index.mr.exec(mrPagerankConfig, (e, v) => {
       try {
         expect(v).toEqual(expect.arrayContaining(expected));
         done();
@@ -99,7 +98,7 @@ test("M6: slightly more complicated pagerank graph", (done) => {
   dataset.forEach((o) => {
     const key = Object.keys(o)[0];
     const value = o[key];
-    distribution.pagerank.store.put(value, key, (e, v) => {
+    distribution.index.store.put(value, key, (e, v) => {
       cntr++;
       // Once the dataset is in place, run the map reduce
       if (cntr === dataset.length) {
@@ -115,9 +114,9 @@ test("M6: slightly more complicated pagerank graph", (done) => {
 */
 
 beforeAll((done) => {
-  pagerankGroup[id.getSID(n1)] = n1;
-  pagerankGroup[id.getSID(n2)] = n2;
-  pagerankGroup[id.getSID(n3)] = n3;
+  indexGroup[id.getSID(n1)] = n1;
+  indexGroup[id.getSID(n2)] = n2;
+  indexGroup[id.getSID(n3)] = n3;
 
   const startNodes = (cb) => {
     distribution.local.status.spawn(n1, (e, v) => {
@@ -133,10 +132,10 @@ beforeAll((done) => {
     localServer = server;
 
     startNodes(() => {
-      const pagerankConfig = { gid: "pagerank" };
-      distribution.local.groups.put(pagerankConfig, pagerankGroup, (e, v) => {
-        distribution.pagerank.groups.put(pagerankConfig, pagerankGroup, (e, v) => {
-            done();
+      const indexConfig = { gid: "index" };
+      distribution.local.groups.put(indexConfig, indexGroup, (e, v) => {
+        distribution.index.groups.put(indexConfig, indexGroup, (e, v) => {
+          done();
         });
       });
     });
